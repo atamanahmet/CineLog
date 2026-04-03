@@ -4,11 +4,11 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-BackEnd/permovdb/src/main/resources/application-secret.properties
-BackEnd/permovdb/src/main/resources/application.properties
-BackEnd/permovdb/src/main/java/com/permovdb/permovdb/security/JwtUtil.java
-BackEnd/permovdb/src/main/java/com/permovdb/permovdb/security/SecurityConstants.java
-RecommendationEngine/recommendationService/**
+backend/CineLog/src/main/resources/application-secret.properties
+backend/CineLog/src/main/resources/application.properties
+backend/CineLog/src/main/java/com/atamanahmet/cinelog/security/JwtUtil.java
+backend/CineLog/src/main/java/com/atamanahmet/cinelog/security/SecurityConstants.java
+recommendation-engine/service/rec-env
 uploads
 
 ### STS ###
@@ -25,6 +25,7 @@ uploads
 *.iws
 *.iml
 *.ipr
+.venv
 
 ### NetBeans ###
 /nbproject/private/
