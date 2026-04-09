@@ -1,5 +1,5 @@
 import { React, useState } from "react";
-import axios from "axios";
+import api from "../api/axiosInstance";
 // import collage from "../assets/collage.jpg";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
@@ -27,13 +27,13 @@ export default function Login() {
     // console.log("password:" + formData.password);
 
     try {
-      const apiResponse = await axios.post(
-        "http://localhost:8080/login",
+      const apiResponse = await api.post(
+        "/login",
         {
           username: formData.username,
           password: formData.password,
         },
-        { withCredentials: true }
+        { withCredentials: true },
       );
       if (apiResponse.status == 200) {
         setStateInfo("Logged-in succesfully. Redirecting...");

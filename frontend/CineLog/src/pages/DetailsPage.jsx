@@ -2,7 +2,7 @@ import { Star, Calendar, Users, Globe, Play } from "lucide-react";
 import { useUser } from "../context/UserContext";
 import { useNavigate } from "react-router";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../api/axiosInstance";
 import VideoModal from "../components/VideoModal";
 import ListButton from "../components/ListButton";
 import missing from "../assets/missing.png";
@@ -37,8 +37,8 @@ function DetailsPage() {
 
   useEffect(() => {
     if (detail && !detail.trailer_path) {
-      axios
-        .get(`http://localhost:8080/movie/${detail.id}/video`, {
+      api
+        .get(`/movie/${detail.id}/video`, {
           withCredentials: true,
         })
         .then((res) => {
@@ -142,7 +142,7 @@ function DetailsPage() {
                     <Star className="w-5 h-5 text-yellow-400 fill-current" />
                     <span
                       className={`text-lg font-semibold ${getRatingColor(
-                        detail.vote_average
+                        detail.vote_average,
                       )}`}
                     >
                       {detail.vote_average.toFixed(1)}

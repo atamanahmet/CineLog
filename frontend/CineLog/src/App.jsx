@@ -8,7 +8,7 @@ import {
 } from "react-router-dom";
 import Search from "./components/Search";
 
-import axios from "axios";
+import api from "./api/axiosInstance";
 
 import "./App.css";
 import { useUser } from "./context/UserContext";
@@ -60,11 +60,10 @@ function App() {
   //watchlist add and remove calls for api
   useEffect(() => {
     if (movieId && actionType) {
-      axios
-        .get(
-          "http://localhost:8080/user/watchlist/" + movieId + "/" + actionType,
-          { withCredentials: true }
-        )
+      api
+        .get("/user/watchlist/" + movieId + "/" + actionType, {
+          withCredentials: true,
+        })
         .catch((err) => console.error("Backend error:", err));
     }
   }, [movieId, actionType, watchlist]);

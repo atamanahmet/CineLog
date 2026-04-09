@@ -1,7 +1,7 @@
 import { useUser } from "../context/UserContext";
 import { useEffect, useState, useRef } from "react";
 import Tooltip from "@mui/material/Tooltip";
-import axios from "axios";
+import api from "../api/axiosInstance";
 import MoviePlate from "../components/MoviePlate";
 import WatchlistButton from "../components/WatchlistButton";
 import Card from "../components/Card";
@@ -105,8 +105,8 @@ export default function ProfilePage() {
       const httpUrl = "http://ip-api.com/json/";
 
       try {
-        const response = await axios.get(httpUrl);
-        const data = response.data;
+        const response = await fetch(httpUrl);
+        const data = await response.json();
 
         setLocationInfo({
           country: data.country || data.country_name || "",

@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../api/axiosInstance";
 import { useNavigate } from "react-router";
 import { useUser } from "../context/UserContext";
 import profilePlaceholder from "../assets/profile.png";
@@ -18,8 +18,8 @@ export default function Upload() {
   //       formData.append("profilePicture", file);
 
   //       const response = async () => {
-  //         await axios
-  //           .post("http://localhost:8080/user/photo", formData, {
+  //         await api
+  //           .post("/user/photo", formData, {
   //             headers: {
   //               "content-type": "multipart/form-data",
   //             },

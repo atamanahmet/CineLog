@@ -59,7 +59,7 @@ def rec_update():
     global recommendations, sorted_idx
 
     try:
-        movie_db_response = requests.get("http://localhost:8080/api/movies")
+        movie_db_response = requests.get("http://cinelog-backend:8080/api/movies")
         movie_db = movie_db_response.json()
     except Exception as e:
         return jsonify({"error": f"Failed to load movie DB: {str(e)}"}), 500
@@ -133,5 +133,10 @@ def rec_update():
     return jsonify(top_recs)
 
 
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"}), 200
+
+
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=8181, debug=True)
+    app.run(host="0.0.0.0", port=8181, debug=True)

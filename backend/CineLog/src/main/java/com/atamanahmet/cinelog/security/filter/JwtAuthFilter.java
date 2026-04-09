@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,7 +14,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.atamanahmet.cinelog.security.JwtUtil;
-import com.atamanahmet.cinelog.security.SecurityConstants;
 import com.atamanahmet.cinelog.service.UserService;
 
 import jakarta.servlet.FilterChain;
@@ -21,15 +21,18 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 @Component
+@RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    @Autowired
-    JwtUtil jwtUtil;
+    @Value("${jwt.secret}")
+    private String secretKey;
 
-    @Autowired
-    UserService userService;
+    private final JwtUtil jwtUtil;
+
+    private final UserService userService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -59,7 +62,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        String user = JWT.require(Algorithm.HMAC512(SecurityConstants.SECRET_KEY))
+        String user = JWT.require(Algorithm.HMAC512(secretKey))
                 .build()
                 .verify(token)
                 .getSubject();

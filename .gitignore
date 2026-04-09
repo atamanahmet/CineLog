@@ -4,12 +4,25 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-backend/CineLog/src/main/resources/application-secret.properties
-backend/CineLog/src/main/resources/application.properties
-backend/CineLog/src/main/java/com/atamanahmet/cinelog/security/JwtUtil.java
-backend/CineLog/src/main/java/com/atamanahmet/cinelog/security/SecurityConstants.java
+backend/CineLog/.mvn
 recommendation-engine/service/rec-env
 uploads
+
+# Secrets
+.env
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Uploads
+uploads/
+
+# OS
+.DS_Store
+Thumbs.db
 
 ### STS ###
 .apt_generated

@@ -1,7 +1,7 @@
 import Header from "../components/Header";
 import profile from "../assets/profile.png";
 import { React, useState } from "react";
-import axios from "axios";
+import api from "../api/axiosInstance";
 import collage from "../assets/collage.jpg";
 import { useNavigate } from "react-router-dom";
 
@@ -38,10 +38,10 @@ export default function Register() {
     // }
 
     try {
-      const response = await axios.post(
-        "http://localhost:8080/register",
+      const response = await api.post(
+        "/register",
         { username: formData.username, password: formData.password },
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       if (response.status === 201) {

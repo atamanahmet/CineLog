@@ -2,7 +2,7 @@ import Card from "./Card";
 import { useState, useEffect } from "react";
 import { useUser } from "../context/UserContext";
 import WatchlistButton from "./WatchlistButton";
-import axios from "axios";
+import api from "../api/axiosInstance";
 import CardPlate from "./CardPlate";
 import ToggleSwitch from "./ToggleSwitch";
 
@@ -41,7 +41,7 @@ export default function Top({}) {
     if (isFetching) return;
     setIsFetching(true);
     try {
-      const res = await axios.get("http://localhost:8080", {
+      const res = await axios.get("", {
         params: {
           adult,
           page: currentPage,

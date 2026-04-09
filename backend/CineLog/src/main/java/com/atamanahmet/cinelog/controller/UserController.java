@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -50,27 +51,26 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private MovieService movieService;
+    @Value("${recommendation.engine.url}")
+    private String recEngineUrl;
 
-    @Autowired
-    private UserService userService;
+    private final MovieService movieService;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final UserService userService;
 
-    @Autowired
-    private JwtCookieUtil jwtCookieUtil;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    private RestTemplate restTemplate;
+    private final JwtCookieUtil jwtCookieUtil;
 
-    @Autowired
-    private TvShowService tvShowService;
+    private final RestTemplate restTemplate;
+
+    private final TvShowService tvShowService;
 
     @GetMapping("/signup")
     public String getForm() {
@@ -361,8 +361,6 @@ public class UserController {
                     HttpHeaders headers = new HttpHeaders();
                     headers.setContentType(MediaType.APPLICATION_JSON);
                     HttpEntity<String> entity = new HttpEntity<>(json, headers);
-
-                    String recEngineUrl = "http://127.0.0.1:8181/rec/update";
 
                     ResponseEntity<String> res = restTemplate.postForEntity(recEngineUrl, entity, String.class);
 
