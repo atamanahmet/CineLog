@@ -1,0 +1,29 @@
+{
+  "id": 100,
+  "name": "Running Show",
+  "original_name": "Running Show",
+  "first_air_date": "2020-01-01",
+  "status": "Returning Series",
+  "number_of_seasons": 2,
+  "number_of_episodes": 12,
+  "episode_run_time": [45, 50],
+  "genres": [],
+  "networks": [],
+  "created_by": [],
+  "next_episode_to_air": {
+    "air_date": "2026-03-15",
+    "episode_number": 5,
+    "season_number": 2,
+    "name": "Next One"
+  },
+  "seasons": [
+    {
+      "season_number": 1,
+      "name": "Season 1",
+      "episode_count": 6,
+      "air_date": "2020-01-01",
+      "poster_path": null,
+      "vote_average": 7.5
+    }
+  ]
+}

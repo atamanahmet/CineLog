@@ -1,34 +1,44 @@
-
 package com.atamanahmet.cinelog.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import com.atamanahmet.cinelog.dto.DiscoverRequest;
+import com.atamanahmet.cinelog.domain.entity.CastMember;
+import com.atamanahmet.cinelog.domain.entity.TvShow;
+import com.atamanahmet.cinelog.dto.SearchPageResponse;
+import com.atamanahmet.cinelog.dto.TvShowDto;
 
-import com.atamanahmet.cinelog.domain.POJO.TvShow;
-import com.atamanahmet.cinelog.repository.TvShowRepository;
+public interface TvShowService {
 
-@Service
-public class TvShowService {
+    List<TvShowDto> discoverTvShows(DiscoverRequest params);
 
-    @Autowired
-    TvShowRepository tvShowRepository;
+    SearchPageResponse<TvShowDto> searchTvShows(String query, int page, Integer minVotes);
 
-    public void saveTvShow(TvShow tvShow) {
-        tvShowRepository.save(tvShow);
-    }
+    /**
+     * Live TMDB detail fetch, mapped to TvShowDto. No persistence.
+     */
+    TvShowDto getDetailsFromTmdb(Integer id);
 
-    public TvShow findTvShowById(Integer id) {
-        return tvShowRepository.findById(id).orElse(null);
-    }
+    /**
+     * Return the cached YouTube trailer URL for this TV show, if any.
+     */
+    Optional<String> getTrailer(Integer id);
 
-    public List<TvShow> getAllTvShows() {
-        return tvShowRepository.findAll();
-    }
+    /**
+     * Return the cached top cast for this TV show.
+     */
+    List<CastMember> getTopCast(Integer id);
 
-    public List<TvShow> getTvShowsFromIdSet(Set<Integer> idSet) {
-        return tvShowRepository.findAllById(idSet);
-    }
+    void saveTvShow(TvShow tvShow);
+
+    TvShow findTvShowById(Integer id);
+
+    /**
+     * Return local TV show, or fetch from TMDB, save, and return it.
+     */
+    TvShow findOrFetchTvShow(Integer id);
+
+    List<TvShow> getTvShowsFromIdSet(Set<Integer> idSet);
 }

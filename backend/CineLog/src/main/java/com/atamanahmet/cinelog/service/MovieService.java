@@ -1,33 +1,44 @@
 package com.atamanahmet.cinelog.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import com.atamanahmet.cinelog.dto.DiscoverRequest;
+import com.atamanahmet.cinelog.domain.entity.CastMember;
+import com.atamanahmet.cinelog.domain.entity.Movie;
+import com.atamanahmet.cinelog.dto.MovieDto;
+import com.atamanahmet.cinelog.dto.SearchPageResponse;
 
-import com.atamanahmet.cinelog.domain.POJO.Movie;
-import com.atamanahmet.cinelog.repository.MovieRepository;
+public interface MovieService {
 
-@Service
-public class MovieService {
+    List<MovieDto> discoverMovies(DiscoverRequest params);
 
-    @Autowired
-    MovieRepository movieRepository;
+    SearchPageResponse<MovieDto> searchMovies(String query, int page, Integer minVotes);
 
-    public void saveMovie(Movie movie) {
-        movieRepository.save(movie);
-    }
+    /**
+     * Live TMDB detail fetch, mapped to MovieDto. No persistence.
+     */
+    MovieDto getDetailsFromTmdb(Integer id);
 
-    public Movie findMovieById(Integer id) {
-        return movieRepository.findById(id).orElse(null);
-    }
+    /**
+     * Return the cached YouTube trailer URL for this movie, if any.
+     */
+    Optional<String> getTrailer(Integer id);
 
-    public List<Movie> getAllMovies() {
-        return movieRepository.findAll();
-    }
+    /**
+     * Return the cached top cast for this movie.
+     */
+    List<CastMember> getTopCast(Integer id);
 
-    public List<Movie> getMoviesFromIdSet(Set<Integer> idSet) {
-        return movieRepository.findAllById(idSet);
-    }
+    void saveMovie(Movie movie);
+
+    Movie findMovieById(Integer id);
+
+    /**
+     * Return local movie, or fetch from TMDB, save, and return it.
+     */
+    Movie findOrFetchMovie(Integer id);
+
+    List<Movie> getMoviesFromIdSet(Set<Integer> idSet);
 }

@@ -1,0 +1,46 @@
+{
+  "id": 1399,
+  "name": "Game of Thrones",
+  "original_name": "Game of Thrones",
+  "overview": "Overview text.",
+  "adult": false,
+  "backdrop_path": "/bd.jpg",
+  "poster_path": "/p.jpg",
+  "first_air_date": "2011-04-17",
+  "last_air_date": "2019-05-19",
+  "status": "Ended",
+  "number_of_seasons": 8,
+  "number_of_episodes": 73,
+  "episode_run_time": [],
+  "vote_average": 8.4,
+  "vote_count": 1000,
+  "popularity": 100.0,
+  "original_language": "en",
+  "origin_country": ["US"],
+  "genres": [{ "id": 18, "name": "Drama" }],
+  "networks": [
+    { "id": 49, "name": "HBO", "logo_path": "/logo.png", "origin_country": "US" }
+  ],
+  "created_by": [
+    { "id": 9813, "name": "David Benioff", "gender": 2, "profile_path": "/db.jpg" }
+  ],
+  "next_episode_to_air": null,
+  "seasons": [
+    {
+      "season_number": 0,
+      "name": "Specials",
+      "episode_count": 5,
+      "air_date": "2011-02-06",
+      "poster_path": "/s0.jpg",
+      "vote_average": 7.0
+    },
+    {
+      "season_number": 1,
+      "name": "Season 1",
+      "episode_count": 10,
+      "air_date": "2011-04-17",
+      "poster_path": "/s1.jpg",
+      "vote_average": 8.1
+    }
+  ]
+}

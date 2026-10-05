@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.atamanahmet.cinelog.domain.entity.CastMember;
 import com.atamanahmet.cinelog.domain.entity.TmdbMediaType;
 import com.atamanahmet.cinelog.dto.DiscoverRequest;
-import com.atamanahmet.cinelog.dto.MovieDto;
+import com.atamanahmet.cinelog.dto.TvShowDto;
 import com.atamanahmet.cinelog.dto.tmdb.TmdbGenre;
 import com.atamanahmet.cinelog.service.GenreCacheService;
-import com.atamanahmet.cinelog.service.MovieService;
+import com.atamanahmet.cinelog.service.TvShowService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -32,46 +32,46 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 @Validated
-class MovieController {
+class TvController {
 
-        private final MovieService movieService;
+        private final TvShowService tvShowService;
         private final GenreCacheService genreCacheService;
 
-        @GetMapping("/movie/discover")
-        public ResponseEntity<?> getMovieData(@Valid @ModelAttribute DiscoverRequest request) {
-                return ResponseEntity.ok(movieService.discoverMovies(request));
+        @GetMapping("/tv/discover")
+        public ResponseEntity<?> getTv(@Valid @ModelAttribute DiscoverRequest request) {
+                return ResponseEntity.ok(tvShowService.discoverTvShows(request));
         }
 
-        @GetMapping("/movie/genres")
-        public ResponseEntity<List<TmdbGenre>> getMovieGenres() {
-                return ResponseEntity.ok(genreCacheService.getGenres(TmdbMediaType.MOVIE));
+        @GetMapping("/tv/genres")
+        public ResponseEntity<List<TmdbGenre>> getTvGenres() {
+                return ResponseEntity.ok(genreCacheService.getGenres(TmdbMediaType.TV));
         }
 
         /**
-         * Search movies by free text. Optional minVotes drops low-vote TMDB hits.
+         * Search TV shows by free text. Optional minVotes drops low-vote TMDB hits.
          */
-        @GetMapping("/movie/search")
+        @GetMapping("/tv/search")
         public ResponseEntity<?> searchHandler(
                         @RequestParam("query") @NotBlank @Size(max = 100) String query,
                         @RequestParam(value = "page", defaultValue = "1") @Min(1) int page,
                         @RequestParam(value = "minVotes", required = false) @Min(0) @Max(DiscoverRequest.MAX_VOTE_COUNT) Integer minVotes) {
-                return ResponseEntity.ok(movieService.searchMovies(query, page, minVotes));
+                return ResponseEntity.ok(tvShowService.searchTvShows(query, page, minVotes));
         }
 
-        @GetMapping("/movie/{mediaId}/video")
+        @GetMapping("/tv/{mediaId}/video")
         public ResponseEntity<String> getVideo(@PathVariable(name = "mediaId", required = true) Integer mediaId) {
-                Optional<String> trailer = movieService.getTrailer(mediaId);
+                Optional<String> trailer = tvShowService.getTrailer(mediaId);
                 return trailer.map(url -> new ResponseEntity<>(url, HttpStatus.OK))
                                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
         }
 
-        @GetMapping("/movie/{mediaId}/credits")
+        @GetMapping("/tv/{mediaId}/credits")
         public ResponseEntity<List<CastMember>> getCredits(@PathVariable(name = "mediaId") Integer mediaId) {
-                return ResponseEntity.ok(movieService.getTopCast(mediaId));
+                return ResponseEntity.ok(tvShowService.getTopCast(mediaId));
         }
 
-        @GetMapping("/movie/{mediaId}")
-        public ResponseEntity<MovieDto> getMovieById(@PathVariable(name = "mediaId") Integer mediaId) {
-                return ResponseEntity.ok(movieService.getDetailsFromTmdb(mediaId));
+        @GetMapping("/tv/{mediaId}")
+        public ResponseEntity<TvShowDto> getTvById(@PathVariable(name = "mediaId") Integer mediaId) {
+                return ResponseEntity.ok(tvShowService.getDetailsFromTmdb(mediaId));
         }
 }
