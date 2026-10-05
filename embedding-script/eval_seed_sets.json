@@ -1,0 +1,54 @@
+[
+  {
+    "name": "sci-fi movies",
+    "media_type": "MOVIE",
+    "seeds": [
+      {"tmdb_id": 603, "title": "The Matrix"},
+      {"tmdb_id": 78, "title": "Blade Runner"},
+      {"tmdb_id": 157336, "title": "Interstellar"},
+      {"tmdb_id": 27205, "title": "Inception"},
+      {"tmdb_id": 348, "title": "Alien"},
+      {"tmdb_id": 62, "title": "2001: A Space Odyssey"},
+      {"tmdb_id": 329865, "title": "Arrival"},
+      {"tmdb_id": 264660, "title": "Ex Machina"},
+      {"tmdb_id": 280, "title": "Terminator 2: Judgment Day"},
+      {"tmdb_id": 335984, "title": "Blade Runner 2049"}
+    ]
+  },
+  {
+    "name": "drama movies",
+    "media_type": "MOVIE",
+    "seeds": [
+      {"tmdb_id": 238, "title": "The Godfather"},
+      {"tmdb_id": 424, "title": "Schindler's List"},
+      {"tmdb_id": 13, "title": "Forrest Gump"},
+      {"tmdb_id": 278, "title": "The Shawshank Redemption"},
+      {"tmdb_id": 244786, "title": "Whiplash"},
+      {"tmdb_id": 496243, "title": "Parasite"}
+    ]
+  },
+  {
+    "name": "mixed movies",
+    "media_type": "MOVIE",
+    "seeds": [
+      {"tmdb_id": 862, "title": "Toy Story"},
+      {"tmdb_id": 155, "title": "The Dark Knight"},
+      {"tmdb_id": 8363, "title": "Superbad"},
+      {"tmdb_id": 138843, "title": "The Conjuring"},
+      {"tmdb_id": 129, "title": "Spirited Away"},
+      {"tmdb_id": 76341, "title": "Mad Max: Fury Road"}
+    ]
+  },
+  {
+    "name": "sci-fi tv",
+    "media_type": "TV",
+    "seeds": [
+      {"tmdb_id": 1396, "title": "Breaking Bad"},
+      {"tmdb_id": 1399, "title": "Game of Thrones"},
+      {"tmdb_id": 66732, "title": "Stranger Things"},
+      {"tmdb_id": 42009, "title": "Black Mirror"},
+      {"tmdb_id": 63639, "title": "The Expanse"},
+      {"tmdb_id": 63247, "title": "Westworld"}
+    ]
+  }
+]
