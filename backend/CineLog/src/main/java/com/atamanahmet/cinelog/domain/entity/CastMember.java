@@ -1,4 +1,5 @@
-package com.atamanahmet.cinelog.domain.POJO;
+package com.atamanahmet.cinelog.domain.entity;
+
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
