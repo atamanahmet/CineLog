@@ -7,7 +7,8 @@ import org.springframework.stereotype.Component;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.atamanahmet.cinelog.domain.POJO.User;
+import com.atamanahmet.cinelog.config.AuthProperties;
+import com.atamanahmet.cinelog.domain.entity.User;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,21 +16,26 @@ import jakarta.servlet.http.HttpServletRequest;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
-    private String secretKey;
+    private final String secretKey;
+    private final AuthProperties authProperties;
 
-    @Value("${jwt.expiration}")
-    private long jwtExpiration;
-
-    public String generateToken(User user) {
-        return JWT.create()
-                .withSubject(user.getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis() + jwtExpiration))
-                .sign(Algorithm.HMAC512(secretKey));
+    public JwtUtil(@Value("${jwt.secret}") String secretKey, AuthProperties authProperties) {
+        this.secretKey = secretKey;
+        this.authProperties = authProperties;
     }
 
-    public boolean validateToken(String token, User user) {
-        return extractUsername(token).equals(user.getUsername());
+    public String generateToken(User user) {
+        return generateToken(user.getUsername());
+    }
+
+    /**
+     * Issue an access token for the given username.
+     */
+    public String generateToken(String username) {
+        return JWT.create()
+                .withSubject(username)
+                .withExpiresAt(new Date(System.currentTimeMillis() + authProperties.accessTokenTtl().toMillis()))
+                .sign(Algorithm.HMAC512(secretKey));
     }
 
     public String extractUsername(String token) {

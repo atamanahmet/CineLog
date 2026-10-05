@@ -1,38 +1,34 @@
 package com.atamanahmet.cinelog.security.filter;
 
 import java.io.IOException;
-import java.util.Arrays;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.atamanahmet.cinelog.security.JwtUtil;
-import com.atamanahmet.cinelog.service.UserService;
+import com.atamanahmet.cinelog.security.UserDetailsImpl;
+import com.atamanahmet.cinelog.security.UserDetailsServiceImpl;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    @Value("${jwt.secret}")
-    private String secretKey;
-
     private final JwtUtil jwtUtil;
 
-    private final UserService userService;
+    private final UserDetailsServiceImpl userDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -45,31 +41,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = null;
-
-        Cookie[] cookies = request.getCookies();
-
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("jwt_token")) {
-                    token = cookie.getValue();
-                }
+        try {
+            String username = jwtUtil.extractUsernameFromRequest(request);
+            if (username != null) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
+                Authentication authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
+        } catch (JWTVerificationException | UsernameNotFoundException ex) {
+            log.warn("JWT authentication skipped: {}", ex.getMessage());
         }
-
-        if (token == null) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        String user = JWT.require(Algorithm.HMAC512(secretKey))
-                .build()
-                .verify(token)
-                .getSubject();
-
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, Arrays.asList());
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
     }

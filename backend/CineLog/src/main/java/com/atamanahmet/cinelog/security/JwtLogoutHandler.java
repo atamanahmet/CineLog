@@ -1,21 +1,26 @@
 package com.atamanahmet.cinelog.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
-import org.springframework.stereotype.Component;
 
+import com.atamanahmet.cinelog.service.RefreshTokenService;
+
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
-@Component
+@RequiredArgsConstructor
 public class JwtLogoutHandler implements LogoutHandler {
 
-    @Autowired
-    private JwtCookieUtil jwtCookieUtil;
+    private final JwtCookieUtil jwtCookieUtil;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
-        jwtCookieUtil.removeJwtCookie(response);
+        Cookie refreshCookie = jwtCookieUtil.getRefreshCookie(request);
+        String rawToken = refreshCookie != null ? refreshCookie.getValue() : null;
+        refreshTokenService.revokeFamilyByRawToken(rawToken);
+        jwtCookieUtil.clearAuthCookies(response);
     }
 }

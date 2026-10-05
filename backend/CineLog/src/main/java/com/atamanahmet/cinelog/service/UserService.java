@@ -1,87 +1,34 @@
 package com.atamanahmet.cinelog.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Set;
 
-import com.atamanahmet.cinelog.domain.POJO.User;
-import com.atamanahmet.cinelog.repository.UserRepository;
-import com.atamanahmet.cinelog.security.AuthResponse;
-import com.atamanahmet.cinelog.security.JwtUtil;
+import org.springframework.http.ResponseEntity;
+
+import com.atamanahmet.cinelog.domain.entity.MediaKey;
+import com.atamanahmet.cinelog.domain.entity.TmdbMediaType;
+import com.atamanahmet.cinelog.domain.entity.User;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-@Service
-public class UserService {
+public interface UserService {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    ResponseEntity<?> getUserArchive(HttpServletRequest request);
 
-    @Autowired
-    private UserRepository userRepository;
+    User loadByUserName(String username);
 
-    @Autowired
-    private BCryptPasswordEncoder bCrypt;
+    /**
+     * Loved movie and TV keys for one user.
+     */
+    Set<MediaKey> findLovedKeys(Integer userId);
 
-    public AuthResponse saveUser(String username, String password) {
-        if (userRepository.findByUsername(username) == null) {
+    /**
+     * Replace stored recommendation keys for one media type inside a short transaction.
+     */
+    void replaceRecommendation(Integer userId, TmdbMediaType mediaType, List<MediaKey> keys);
 
-            User newUser = new User(username, bCrypt.encode(password));
-
-            String token = jwtUtil.generateToken(newUser);
-
-            newUser.setJWToken(token);
-
-            userRepository.save(newUser);
-
-            return new AuthResponse(newUser.getUsername(), token);
-        }
-        return null;
-    }
-
-    public AuthResponse updateUser(User user) {
-        if (userRepository.findByUsername(user.getUsername()) != null) {
-
-            userRepository.save(user);
-
-            return new AuthResponse(user.getUsername(), user.getJWToken());
-        }
-        return null;
-    }
-
-    public AuthResponse authUser(User user) {
-        User existingUser = userRepository.findByUsername(user.getUsername());
-
-        if (existingUser != null) {
-
-            if (bCrypt.matches(user.getPassword(), existingUser.getPassword())) {
-
-                String token = jwtUtil.generateToken(existingUser);
-
-                existingUser.setJWToken(token);
-
-                userRepository.save(existingUser);
-
-                return new AuthResponse(user.getUsername(), token);
-            }
-        }
-        return null;
-
-    }
-
-    public User loadByUserName(String username) {
-        return userRepository.findByUsername(username);
-    }
-
-    public User getUserFromRequest(HttpServletRequest request) {
-
-        String username = jwtUtil.extractUsernameFromRequest(request);
-
-        User user = loadByUserName(username);
-
-        if (user != null) {
-            return user;
-        }
-        return null;
-    }
+    /**
+     * Persist the profile photo URL for one user inside a short transaction.
+     */
+    void updateProfilePhotoUrl(Integer userId, String url);
 }
