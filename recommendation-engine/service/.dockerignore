@@ -1,0 +1,16 @@
+.env
+.env.*
+.git
+.gitignore
+.venv
+venv
+rec-env
+__pycache__
+*.pyc
+tests
+uploads
+uploads/
+node_modules
+*.iml
+.idea
+.vscode

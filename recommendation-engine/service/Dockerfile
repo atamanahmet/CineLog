@@ -3,9 +3,11 @@ FROM python:3.11-slim
 WORKDIR /app
 COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install torch==2.11.0+cpu --index-url https://download.pytorch.org/whl/cpu && \
     pip install -r requirements.txt
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
-COPY RecommendationService.py .
+RUN useradd --create-home --uid 1000 appuser
+COPY --chown=appuser:appuser \
+     config.py logging_setup.py auth.py catalog.py catalog_store.py catalog_loader.py \
+     recommender.py request_parsing.py routes.py app.py wsgi.py gunicorn.conf.py ./
+USER appuser
 EXPOSE 8181
-CMD ["python", "RecommendationService.py"]
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "wsgi:app"]

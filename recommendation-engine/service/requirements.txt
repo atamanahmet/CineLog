@@ -1,5 +1,6 @@
-sentence-transformers==3.4.1
-flask==3.1.1
-requests==2.32.3
-scikit-learn==1.6.1
 numpy==1.26.4
+flask==3.1.1
+psycopg2-binary==2.9.10
+python-dotenv==1.1.0
+gunicorn==26.2.0
+Flask-Limiter==4.1.1
