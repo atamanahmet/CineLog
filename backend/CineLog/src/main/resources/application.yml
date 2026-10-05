@@ -1,0 +1,97 @@
+spring:
+  application:
+    name: cinelog
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+  task:
+    scheduling:
+      pool:
+        size: 2
+
+api:
+  key: ${TMDB_API_KEY}
+
+cloudinary:
+  url: ${CLOUDINARY_URL:}
+
+jwt:
+  secret: ${JWT_SECRET}
+
+auth:
+  access-token-ttl: ${AUTH_ACCESS_TOKEN_TTL:900000ms}
+  refresh-token-ttl: ${AUTH_REFRESH_TOKEN_TTL:30d}
+  cookie-secure: ${AUTH_COOKIE_SECURE:true}
+  cookie-same-site: ${AUTH_COOKIE_SAME_SITE:Lax}
+
+recommendation:
+  engine:
+    url: ${REC_ENGINE_URL}
+    update-token: ${UPDATE_TOKEN}
+    connect-timeout: 3s
+    read-timeout: 10s
+  cache:
+    ttl-hours: 6
+    max-size: 5000
+    hydrate-pool-size: 8
+    hydrate-timeout-seconds: 8
+  limits:
+    max-results: ${REC_MAX_RESULTS:100}
+    max-exclude: ${REC_MAX_EXCLUDE:10000}
+  quality:
+    min-votes-movie: 100
+    min-votes-tv: 50
+
+content:
+  adult-enabled: ${ADULT_CONTENT_ENABLED:false}
+
+ratelimit:
+  tmdb:
+    capacity: 25
+    refill-tokens: 25
+    refill-duration-seconds: 1
+  tmdb-max-wait-seconds: 1
+  tmdb-warm:
+    capacity: 3
+    refill-tokens: 3
+    refill-duration-seconds: 1
+  tmdb-warm-max-wait-seconds: 5
+  tmdb-retry-after-default-seconds: 1
+  ip:
+    capacity: 30
+    refill-tokens: 30
+    refill-duration-seconds: 60
+  auth:
+    capacity: 5
+    refill-tokens: 5
+    refill-duration-seconds: 60
+
+discover:
+  cache:
+    items-per-sort: 500
+    ttl-hours: 6
+    refresh-hours: 5
+
+details:
+  cache:
+    ttl-hours: 6
+    max-size: 2000
+
+person:
+  cache:
+    ttl-hours: 6
+    max-size: 500
