@@ -1,0 +1,83 @@
+{
+  "id": 287,
+  "name": "Brad Pitt",
+  "biography": "An actor.",
+  "profile_path": "/pitt.jpg",
+  "birthday": "1963-12-18",
+  "deathday": null,
+  "place_of_birth": "Shawnee, Oklahoma",
+  "known_for_department": "Acting",
+  "also_known_as": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G"
+  ],
+  "combined_credits": {
+    "cast": [
+      {
+        "id": 550,
+        "media_type": "movie",
+        "title": "Fight Club",
+        "poster_path": "/fc.jpg",
+        "character": "Tyler Durden",
+        "release_date": "1999-10-15",
+        "vote_average": 8.4,
+        "genre_ids": [18, 53],
+        "popularity": 90.0
+      },
+      {
+        "id": 999,
+        "media_type": "movie",
+        "title": "",
+        "poster_path": "/x.jpg",
+        "character": "Nobody",
+        "release_date": "2000-01-01",
+        "vote_average": 1.0,
+        "genre_ids": [],
+        "popularity": 1.0
+      },
+      {
+        "id": 1399,
+        "media_type": "tv",
+        "name": "Game of Thrones",
+        "poster_path": null,
+        "character": "Guest",
+        "first_air_date": "",
+        "vote_average": 8.0,
+        "genre_ids": [18],
+        "episode_count": 1,
+        "popularity": 50.0
+      }
+    ],
+    "crew": [
+      {
+        "id": 550,
+        "media_type": "movie",
+        "title": "Fight Club",
+        "poster_path": "/fc.jpg",
+        "job": "Producer",
+        "department": "Production",
+        "release_date": "1999-10-15",
+        "vote_average": 8.4,
+        "genre_ids": [18, 53],
+        "popularity": 90.0
+      },
+      {
+        "id": 700,
+        "media_type": "movie",
+        "title": "Plan B",
+        "poster_path": "/pb.jpg",
+        "job": "Director",
+        "department": "Directing",
+        "release_date": "2010-05-01",
+        "vote_average": 6.0,
+        "genre_ids": [28],
+        "popularity": 10.0
+      }
+    ]
+  }
+}
