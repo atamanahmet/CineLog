@@ -1,35 +1,25 @@
-import { useUser } from "../context/UserContext";
+import Card from "./Card";
+import ListActionButton from "./ListActionButton";
+import { useAuthStore } from "../stores/authStore";
+import { useListsStore } from "../stores/listsStore";
 
 export default function Watchedlist() {
-  const { user, watchedlist } = useUser();
+  const user = useAuthStore((s) => s.user);
+  const watchedlist = useListsStore((s) => s.watchedlist);
+
   return (
     <>
       {Array.from(watchedlist).map((item) => (
         <div key={item.id} className="relative mb-4">
-          <button
-            className="absolute h-7 w-7 text-amber-100 bg-amber-200 rounded left-1 z-0 addButton"
-            onClick={() => {
-              handleWatchedList(item.id, "del");
-            }}
-          >
-            <span className="text-amber-100 remove absolute">-</span>
-          </button>
-          <div
-            onClick={() => onCardClick(item)}
-            className="z-1 relative text-left"
-          >
-            <Card
-              key={item.id}
-              id={item.id}
-              original_title={item.original_title}
-              overview={item.overview}
-              poster_path={item.poster_path}
-              backdrop_path={item.backdrop_path}
-              title={item.title}
-              vote_average={item.vote_average.toFixed(1)}
-              original_language={item.original_language}
-              release_date={item.release_date}
-            />
+          {user && (
+            <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
+              <ListActionButton item={item} listType="watchlist" />
+              <ListActionButton item={item} listType="watched" />
+              <ListActionButton item={item} listType="loved" />
+            </div>
+          )}
+          <div className="z-1 relative text-left">
+            <Card item={item} />
           </div>
         </div>
       ))}
