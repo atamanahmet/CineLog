@@ -1,52 +1,111 @@
 import { Star, Calendar, Users, Globe, Play } from "lucide-react";
-import { useUser } from "../context/UserContext";
-import { useNavigate } from "react-router";
-import { useState, useEffect } from "react";
-import api from "../api/axiosInstance";
+import { Link, useNavigate, useParams } from "react-router";
+import { useState } from "react";
 import VideoModal from "../components/VideoModal";
-import ListButton from "../components/ListButton";
+import ListActionButton from "../components/ListActionButton";
 import missing from "../assets/missing.png";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
+import useDetails from "../hooks/useDetails";
+import { mediaReleaseDate } from "../utils/media";
+import { backdropSrcSet, getTmdbImageUrl } from "../lib/tmdbImage";
+import { labeledGenres } from "../lib/genreLabels";
+import { usePageFiltersStore } from "../stores/pageFiltersStore";
+import { Button } from "@/components/ui/button";
+import { useAuthStore } from "../stores/authStore";
+import useAdultPolicy from "../hooks/useAdultPolicy";
+import { cn } from "@/lib/utils";
+import DetailsHero from "../components/DetailsHero";
+import TvSeriesInfoSection from "../components/TvSeriesInfoSection";
+import { formatDisplayDate } from "../lib/displayDate";
+import DetailsPageSkeleton from "./DetailsPageSkeleton";
+import {
+  DETAILS_CAST_GRID_CLASS,
+  DETAILS_CAST_SECTION_CLASS,
+  DETAILS_CONTAINER_CLASS,
+  DETAILS_INFO_CLASS,
+  DETAILS_PAGE_CLASS,
+  DETAILS_POSTER_CLASS,
+  DETAILS_ROW_CLASS,
+} from "./detailsLayout";
 
+/**
+ * Display title. Same JSON key for movie and TV.
+ */
+function mediaTitle(item) {
+  return item?.title;
+}
+
+/**
+ * Original title. Same JSON key for movie and TV.
+ */
+function mediaOriginalTitle(item) {
+  return item?.originalTitle;
+}
+
+/**
+ * Rating colour by vote average.
+ */
+function getRatingColor(rating) {
+  if (rating >= 8) return "text-foreground";
+  if (rating >= 6) return "text-accent";
+  return "text-destructive";
+}
+
+/**
+ * True when a TMDB path can be requested.
+ */
+function hasImagePath(path) {
+  return typeof path === "string" && path !== "" && !path.endsWith("null");
+}
+
+/**
+ * Image that fades in. Missing path or a failed load shows the fallback.
+ */
+function FadeImage({ src, srcSet, sizes, alt, className, fallback }) {
+  const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  if (!src || failed) {
+    return <img src={fallback} alt={alt} className={className} />;
+  }
+
+  return (
+    <img
+      src={src}
+      srcSet={srcSet || undefined}
+      sizes={srcSet ? sizes : undefined}
+      alt={alt}
+      onLoad={() => setLoaded(true)}
+      onError={() => setFailed(true)}
+      className={cn(
+        className,
+        "transition-opacity duration-300 motion-reduce:transition-none",
+        loaded ? "opacity-100" : "opacity-0",
+      )}
+    />
+  );
+}
+
+/**
+ * Movie or TV details.
+ */
 function DetailsPage() {
-  const { user, detail, cast } = useUser();
+  const user = useAuthStore((s) => s.user);
+  const { mediaType, id } = useParams();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!detail) {
-      navigate("/discover");
-    }
-  }, [detail, navigate]);
-
-  // useEffect(() => {
-
-  // }, []);
-
-  const style = {
-    watchlist:
-      " h-7 w-7 text-amber-100 bg-amber-200 rounded left-1 z-0 addButton scale-170 mx-5 mt-2",
-    watchedlist:
-      "h-7 w-7 text-amber-100 bg-amber-200 rounded z-0 addButton scale-170 mx-5",
-    lovedlist:
-      "h-7 w-7 text-amber-100 bg-amber-200 rounded z-0 addButton scale-170 mx-5",
-  };
+  const validType = mediaType === "movie" || mediaType === "tv";
+  const { details, cast, trailerUrl, loading, error, retry } = useDetails(
+    validType ? mediaType : null,
+    id,
+  );
+  const detail = details;
+  const title = mediaTitle(detail);
+  const originalTitle = mediaOriginalTitle(detail);
+  const dateValue = mediaReleaseDate(detail);
 
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [trailer, setTrailer] = useState(null);
-
-  useEffect(() => {
-    if (detail && !detail.trailer_path) {
-      api
-        .get(`/movie/${detail.id}/video`, {
-          withCredentials: true,
-        })
-        .then((res) => {
-          setTrailer(res.data);
-        })
-        .catch((err) => console.log("Error: " + err));
-    }
-  }, [detail]);
+  const { blurAdult } = useAdultPolicy();
+  const applyGenreEntry = usePageFiltersStore((s) => s.applyGenreEntry);
+  const blurClass = detail?.adult && blurAdult ? "scale-110 blur-2xl" : "";
 
   const openVideoModal = () => {
     setIsVideoModalOpen(true);
@@ -56,234 +115,314 @@ function DetailsPage() {
     setIsVideoModalOpen(false);
   };
 
-  const genreMap = {
-    18: "Drama",
-    53: "Thriller",
-    35: "Comedy",
-    28: "Action",
-    12: "Adventure",
-    16: "Animation",
-    80: "Crime",
-    99: "Documentary",
-    10751: "Family",
-    14: "Fantasy",
-    36: "History",
-    27: "Horror",
-    10402: "Music",
-    9648: "Mystery",
-    10749: "Romance",
-    878: "Science Fiction",
-    10770: "TV Movie",
-    53: "Thriller",
-    10752: "War",
-    37: "Western",
-  };
+  if (!validType) {
+    return (
+      <div className="min-h-screen bg-background pt-20 text-center text-foreground">
+        <p className="mb-6 text-lg">Not found</p>
+        <button
+          className="rounded-lg bg-primary px-6 py-3 font-semibold transition-colors hover:bg-accent hover:text-accent-foreground"
+          onClick={() => navigate(-1)}
+        >
+          Back
+        </button>
+      </div>
+    );
+  }
 
-  const getGenreNames = (genreIds) => {
-    return genreIds.map((id) => genreMap[id] || "Unknown").join(", ");
-  };
+  if (error === "not-found") {
+    return (
+      <div className="min-h-screen bg-background pt-20 text-center text-foreground">
+        <p className="mb-6 text-lg">Title not found</p>
+        <Link
+          to="/"
+          className="rounded-lg bg-primary px-6 py-3 font-semibold transition-colors hover:bg-accent hover:text-accent-foreground"
+        >
+          Discover
+        </Link>
+      </div>
+    );
+  }
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
+  if (error && !details) {
+    return (
+      <div className="min-h-screen bg-background pt-20 text-center text-foreground">
+        <p className="mb-6 text-lg">Could not load details</p>
+        <div className="flex flex-wrap justify-center gap-4">
+          <button
+            className="rounded-lg bg-secondary px-6 py-3 font-semibold transition-colors hover:bg-accent hover:text-accent-foreground"
+            onClick={() => navigate(-1)}
+          >
+            Back
+          </button>
+          <button
+            className="rounded-lg bg-primary px-6 py-3 font-semibold transition-colors hover:bg-accent hover:text-accent-foreground"
+            onClick={retry}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  const getRatingColor = (rating) => {
-    if (rating >= 8) return "text-green-400";
-    if (rating >= 6) return "text-yellow-400";
-    return "text-red-400";
-  };
+  if (loading || !detail) {
+    return <DetailsPageSkeleton />;
+  }
+
+  const backdropPath = hasImagePath(detail.backdropPath)
+    ? detail.backdropPath
+    : "";
+  const posterPath = hasImagePath(detail.posterPath) ? detail.posterPath : "";
+  const genreChips = labeledGenres(detail.genreIds);
+  const imageAlt = title ?? "";
+
+  const backdropUrl = backdropPath
+    ? getTmdbImageUrl(backdropPath, "backdrop", "w1280")
+    : "";
 
   return (
-    <>
-      {detail && (
-        <div className="min-h-screen bg-amber-950 text-white pb-20 ">
-          {/* Backdrop */}
-          <div className="relative h-96 md:h-[500px] overflow-hidden ">
-            <img
-              src={detail.backdrop_path}
-              alt={detail.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-amber-950 via-amber-950/60 to-transparent" />
+    <div className={DETAILS_PAGE_CLASS}>
+      <DetailsHero
+        backdropSrc={backdropUrl || undefined}
+        backdropSrcSet={backdropPath ? backdropSrcSet(backdropPath) : undefined}
+        backdropSizes="100vw"
+        backdropAlt={imageAlt}
+        backdropFallback={missing}
+        backdropImageClassName={blurClass}
+      >
+        <div className={DETAILS_ROW_CLASS}>
+          <div className={DETAILS_POSTER_CLASS}>
+            <FadeImage
+                key={posterPath || "poster-missing"}
+                src={
+                  posterPath
+                    ? getTmdbImageUrl(posterPath, "poster", "w500")
+                    : ""
+                }
+                alt={imageAlt}
+                fallback={missing}
+                className={cn("size-full object-cover", blurClass)}
+              />
+              {blurClass && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-foreground/30 text-background">
+                  <span className="rounded-md bg-destructive px-2 py-0.5 font-bold text-primary-foreground">
+                    18+
+                  </span>
+                  <span className="text-sm font-medium">Adult content</span>
+                </div>
+              )}
           </div>
 
-          {/* Main Content */}
-          <div className="relative -mt-32 md:-mt-117 px-4 md:px-8 max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-8">
-              {/* Poster */}
-              <div className="flex-shrink-0">
-                <img
-                  src={detail.poster_path}
-                  alt={detail.title}
-                  className="w-64 md:w-80 rounded-lg shadow-2xl mx-auto md:mx-0"
-                />
+          <div className={DETAILS_INFO_CLASS}>
+              <div className="mb-4">
+                <h1 className="mb-2 text-4xl font-bold md:text-6xl">
+                  {title}
+                </h1>
+                {originalTitle && originalTitle !== title && (
+                  <p className="text-xl italic text-muted-foreground">
+                    {originalTitle}
+                  </p>
+                )}
               </div>
 
-              {/* detail Info */}
-              <div className="flex-1 pt-8 md:pt-16 -mt-16">
-                <div className="mb-4">
-                  <h1 className="text-4xl md:text-6xl font-bold mb-2">
-                    {detail.title}
-                  </h1>
-                  {detail.original_title !== detail.title && (
-                    <p className="text-xl text-gray-400 italic">
-                      {detail.original_title}
-                    </p>
-                  )}
-                </div>
-
-                {/* Rating and Meta Info */}
-                <div className="flex flex-wrap details-center gap-6 mb-6">
-                  <div className="flex details-center gap-2">
-                    <Star className="w-5 h-5 text-yellow-400 fill-current" />
+              <div className="mb-6 flex flex-wrap items-center gap-6">
+                {detail.voteAverage != null && (
+                  <div className="flex items-center gap-2">
+                    <Star className="h-5 w-5 fill-current text-accent" />
                     <span
-                      className={`text-lg font-semibold ${getRatingColor(
-                        detail.vote_average,
-                      )}`}
+                      className={cn(
+                        "text-lg font-semibold",
+                        getRatingColor(detail.voteAverage),
+                      )}
                     >
-                      {detail.vote_average.toFixed(1)}
+                      {detail.voteAverage.toFixed(1)}
                     </span>
-                    <span className="text-gray-400">
-                      ({detail.vote_count.toLocaleString()} votes)
-                    </span>
+                    {detail.voteCount != null && (
+                      <span className="text-foreground/80 dark:text-muted-foreground">
+                        ({detail.voteCount.toLocaleString()} votes)
+                      </span>
+                    )}
                   </div>
+                )}
 
-                  <div className="flex details-center gap-2">
-                    <Calendar className="w-5 h-5 text-blue-400" />
-                    <span>{formatDate(detail.release_date)}</span>
+                {formatDisplayDate(dateValue) && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-foreground dark:text-muted-foreground" />
+                    <span>{formatDisplayDate(dateValue)}</span>
                   </div>
+                )}
 
-                  <div className="flex details-center gap-2">
-                    <Globe className="w-5 h-5 text-green-400" />
-                    <span className="uppercase">
-                      {detail.original_language}
-                    </span>
+                {detail.originalLanguage && (
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-5 w-5 text-foreground dark:text-muted-foreground" />
+                    <span className="uppercase">{detail.originalLanguage}</span>
                   </div>
+                )}
 
-                  {detail.adult && (
-                    <div className="bg-red-600 px-2 py-1 rounded text-sm font-semibold">
-                      18+
-                    </div>
-                  )}
-                </div>
+                {detail.adult && (
+                  <div className="rounded bg-destructive px-2 py-1 text-sm font-semibold text-primary-foreground">
+                    18+
+                  </div>
+                )}
+              </div>
 
-                {/* Genres */}
+              {genreChips.length > 0 && (
                 <div className="mb-6">
                   <div className="flex flex-wrap gap-2">
-                    {detail.genre_ids.map((genreId) => (
-                      <span
-                        key={genreId}
-                        className="bg-gray-700 hover:bg-gray-600 transition-colors px-3 py-1 rounded-full text-sm"
+                    {genreChips.map(({ id, name }) => (
+                      <Button
+                        key={id}
+                        asChild
+                        variant="secondary"
+                        className="h-auto rounded-full px-3 py-1 text-sm shadow-none hover:opacity-80"
                       >
-                        {genreMap[genreId] || "Unknown"}
-                      </span>
+                        <Link
+                          to="/"
+                          aria-label={
+                            mediaType === "tv"
+                              ? `Discover ${name} TV shows`
+                              : `Discover ${name} movies`
+                          }
+                          onClick={() => applyGenreEntry(mediaType, id)}
+                        >
+                          {name}
+                        </Link>
+                      </Button>
                     ))}
                   </div>
                 </div>
+              )}
 
-                {/* Overview */}
-                <div className="mb-8">
-                  <h2 className="text-2xl font-semibold mb-4">Overview</h2>
-                  <p className="text-gray-300 leading-relaxed text-lg max-w-4xl">
-                    {detail.overview}
-                  </p>
-                </div>
+              <div className="mb-8">
+                <h2 className="mb-4 text-2xl font-semibold">Overview</h2>
+                <p className="max-w-4xl text-lg leading-relaxed text-foreground/90">
+                  {detail.overview}
+                </p>
+              </div>
 
-                {/* Action Buttons */}
-                <div className="flex flex-wrap gap-4">
-                  {/* <a href={trailer}> */}
-                  <button
-                    className="bg-amber-600 hover:bg-amber-700 transition-colors px-6 py-3 rounded-lg flex details-center gap-2 font-semibold"
-                    onClick={openVideoModal}
-                    disabled={!trailer}
-                  >
-                    <Play className="w-5 h-5" />
-                    {trailer != null ? "Watch Trailer" : "No Trailer Available"}
-                  </button>
-                  {/* </a> */}
-                  {user && <ListButton item={detail} style={style} />}
-                  {/* <button className="bg-gray-700 hover:bg-gray-600 transition-colors px-6 py-3 rounded-lg font-semibold">
-                    Add to Watchlist
-                  </button> */}
-                </div>
-                {/* Cast Section */}
-                {cast.length > 0 && (
-                  <div className="mt-12">
-                    <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
-                      <Users className="w-6 h-6 text-amber-400" />
-                      Cast
-                    </h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-                      {cast.map((actor) => (
-                        <div key={actor.id} className="text-center">
-                          <div className="relative mb-3">
-                            <img
-                              src={
-                                actor.profile_path.endsWith("null")
-                                  ? missing
-                                  : actor.profile_path
-                              }
-                              alt={actor.name}
-                              className="w-full aspect-square object-cover shadow-lg rounded-full bg-amber-700"
-                              onError={(e) => {
-                                e.target.src = { profile };
-                              }}
-                            />
-                          </div>
-                          <h3 className="text-sm font-semibold text-white mb-1 truncate">
-                            {actor.name}
-                          </h3>
-                          <p className="text-xs text-gray-400 truncate">
-                            {actor.character || actor.job}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+              <div className="flex flex-wrap gap-4">
+                <button
+                  className="flex items-center gap-2 rounded-lg bg-primary px-6 py-3 font-semibold transition-colors hover:bg-accent hover:text-accent-foreground"
+                  onClick={openVideoModal}
+                  disabled={!trailerUrl}
+                >
+                  <Play className="h-5 w-5" />
+                  {trailerUrl != null
+                    ? "Watch Trailer"
+                    : "No Trailer Available"}
+                </button>
+                {user && (
+                  <div className="flex items-center gap-2">
+                    <ListActionButton
+                      item={detail}
+                      listType="watchlist"
+                      mediaType={mediaType}
+                    />
+                    <ListActionButton
+                      item={detail}
+                      listType="watched"
+                      mediaType={mediaType}
+                    />
+                    <ListActionButton
+                      item={detail}
+                      listType="loved"
+                      mediaType={mediaType}
+                    />
                   </div>
                 )}
-                {/* Additional Stats */}
-                <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-gray-800 p-4 rounded-lg text-center">
-                    <div className="text-2xl font-bold text-blue-400">
-                      {detail.popularity.toFixed(0)}
-                    </div>
-                    <div className="text-sm text-gray-400">Popularity</div>
-                  </div>
-                  <div className="bg-gray-800 p-4 rounded-lg text-center">
-                    <div className="text-2xl font-bold text-green-400">
-                      {detail.vote_count.toLocaleString()}
-                    </div>
-                    <div className="text-sm text-gray-400">Reviews</div>
-                  </div>
-                  <div className="bg-gray-800 p-4 rounded-lg text-center">
-                    <div className="text-2xl font-bold text-purple-400">
-                      #{detail.id}
-                    </div>
-                    <div className="text-sm text-gray-400">detail ID</div>
-                  </div>
-                  <div className="bg-gray-800 p-4 rounded-lg text-center">
-                    <div className="text-2xl font-bold text-yellow-400">
-                      {detail.video ? "Yes" : "No"}
-                    </div>
-                    <div className="text-sm text-gray-400">Has Video</div>
-                  </div>
-                </div>
               </div>
+          </div>
+        </div>
+      </DetailsHero>
+
+      <div className={cn(DETAILS_CONTAINER_CLASS, "min-w-0 overflow-x-hidden")}>
+        {mediaType === "tv" && <TvSeriesInfoSection detail={detail} />}
+        {cast.length > 0 && (
+          <div className={DETAILS_CAST_SECTION_CLASS}>
+            <h2 className="mb-6 flex items-center gap-2 text-2xl font-semibold">
+              <Users className="h-6 w-6 text-muted-foreground" />
+              Cast
+            </h2>
+            <div className={DETAILS_CAST_GRID_CLASS}>
+              {cast.map((actor) => (
+                <Link
+                  key={actor.id}
+                  to={`/person/${actor.id}`}
+                  aria-label={`${actor.name}, actor`}
+                  className="text-center transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <div className="relative mb-3">
+                    <img
+                      src={
+                        !actor.profile_path ||
+                        actor.profile_path.endsWith("null")
+                          ? missing
+                          : getTmdbImageUrl(
+                              actor.profile_path,
+                              "profile",
+                              "w185",
+                            )
+                      }
+                      alt=""
+                      className="aspect-square w-full rounded-full bg-muted object-cover shadow-lg"
+                      onError={(e) => {
+                        e.target.src = missing;
+                      }}
+                    />
+                  </div>
+                  <h3 className="mb-1 truncate text-sm font-semibold text-foreground">
+                    {actor.name}
+                  </h3>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {actor.character || actor.job}
+                  </p>
+                </Link>
+              ))}
             </div>
           </div>
-          <VideoModal
-            isOpen={isVideoModalOpen}
-            onClose={closeVideoModal}
-            videoUrl={trailer}
-            title={detail.title}
-          />
+        )}
+        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+          {detail.popularity != null && (
+            <div className="rounded-lg bg-card p-4 text-center">
+              <div className="text-2xl font-bold text-primary">
+                {detail.popularity.toFixed(0)}
+              </div>
+              <div className="text-sm text-muted-foreground">Popularity</div>
+            </div>
+          )}
+          {detail.voteCount != null && (
+            <div className="rounded-lg bg-card p-4 text-center">
+              <div className="text-2xl font-bold text-accent">
+                {detail.voteCount.toLocaleString()}
+              </div>
+              <div className="text-sm text-muted-foreground">Reviews</div>
+            </div>
+          )}
+          {detail.id != null && (
+            <div className="rounded-lg bg-card p-4 text-center">
+              <div className="text-2xl font-bold text-foreground">
+                #{detail.id}
+              </div>
+              <div className="text-sm text-muted-foreground">detail ID</div>
+            </div>
+          )}
+          {detail.video !== undefined && (
+            <div className="rounded-lg bg-card p-4 text-center">
+              <div className="text-2xl font-bold text-muted-foreground">
+                {detail.video ? "Yes" : "No"}
+              </div>
+              <div className="text-sm text-muted-foreground">Has Video</div>
+            </div>
+          )}
         </div>
-      )}
-    </>
+      </div>
+      <VideoModal
+        isOpen={isVideoModalOpen}
+        onClose={closeVideoModal}
+        videoUrl={trailerUrl}
+        title={title}
+      />
+    </div>
   );
 }
 

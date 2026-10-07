@@ -25,7 +25,7 @@ const VideoModal = ({ isOpen, onClose, videoUrl, title }) => {
         onClick={onClose}
       ></div>
 
-      <div className="relative bg-amber-950 rounded-lg shadow-2xl max-w-5xl w-full mx-4 md:mx-8">
+      <div className="relative bg-card rounded-lg shadow-2xl max-w-5xl w-full mx-4 md:mx-8">
         <button
           onClick={onClose}
           className="absolute -top-4 -right-4 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-2 shadow-lg z-10 transition-colors duration-200"
@@ -34,7 +34,7 @@ const VideoModal = ({ isOpen, onClose, videoUrl, title }) => {
         </button>
 
         {title && (
-          <div className="px-6 py-4 border-b border-amber-900">
+          <div className="px-6 py-4 border-b border-border">
             <h3 className="text-white text-lg font-semibold">
               {title} - Trailer
             </h3>
