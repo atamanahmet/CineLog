@@ -1,37 +1,72 @@
-services:
-  postgres:
-    image: postgres:17
-    container_name: cinelog-postgres
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "${DB_PORT}:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+name: cinelog
 
+# Shared services. Each container gets only the variables listed here.
+#   VAR: ${VAR:?msg}  required, the stack does not start without it
+#   VAR:              optional, the container has it only when it is set
+# Defaults live in the code, never here. Rules: docs/ENVIRONMENT.md
+# DB_HOST and DB_PORT come from the mode file (dev or neon).
+
+services:
   backend:
     build:
       context: ./backend/CineLog
       dockerfile: Dockerfile
     container_name: cinelog-backend
-    depends_on:
-      postgres:
-        condition: service_healthy
-    env_file: ./.env
+    environment:
+      DB_NAME: ${DB_NAME:?set it in .env}
+      DB_USER: ${DB_USER:?set it in .env}
+      DB_PASSWORD: ${DB_PASSWORD:?set it in .env}
+      TMDB_API_KEY: ${TMDB_API_KEY:?set it in .env}
+      JWT_SECRET: ${JWT_SECRET:?set it in .env}
+      AUTH_ALLOWED_ORIGINS: ${AUTH_ALLOWED_ORIGINS:?set it in .env}
+      REC_ENGINE_URL: ${REC_ENGINE_URL:?set it in .env}
+      UPDATE_TOKEN: ${UPDATE_TOKEN:?set it in .env}
+      REC_MAX_RESULTS: ${REC_MAX_RESULTS:?set it in .env}
+      # Optional
+      AUTH_ACCESS_TOKEN_TTL:
+      AUTH_REFRESH_TOKEN_TTL:
+      AUTH_COOKIE_SECURE:
+      AUTH_COOKIE_SAME_SITE:
+      ADULT_CONTENT_ENABLED:
+      CLOUDINARY_URL:
+      CLOUDINARY_TIMEOUT_SECONDS:
+      SCHEDULING_POOL_SIZE:
+      REC_MAX_EXCLUDE:
+      REC_CONNECT_TIMEOUT:
+      REC_READ_TIMEOUT:
+      REC_CACHE_TTL_HOURS:
+      REC_CACHE_MAX_SIZE:
+      REC_CACHE_HYDRATE_POOL_SIZE:
+      REC_CACHE_HYDRATE_TIMEOUT_SECONDS:
+      REC_QUALITY_MIN_VOTES_MOVIE:
+      REC_QUALITY_MIN_VOTES_TV:
+      DISCOVER_CACHE_ITEMS_PER_SORT:
+      DISCOVER_CACHE_TTL_HOURS:
+      DISCOVER_CACHE_REFRESH_HOURS:
+      DETAILS_CACHE_TTL_HOURS:
+      DETAILS_CACHE_MAX_SIZE:
+      PERSON_CACHE_TTL_HOURS:
+      PERSON_CACHE_MAX_SIZE:
+      GENRE_CACHE_TTL_HOURS:
+      RATELIMIT_TMDB_CAPACITY:
+      RATELIMIT_TMDB_REFILL_TOKENS:
+      RATELIMIT_TMDB_REFILL_DURATION_SECONDS:
+      RATELIMIT_TMDB_MAX_WAIT_SECONDS:
+      RATELIMIT_TMDB_WARM_CAPACITY:
+      RATELIMIT_TMDB_WARM_REFILL_TOKENS:
+      RATELIMIT_TMDB_WARM_REFILL_DURATION_SECONDS:
+      RATELIMIT_TMDB_WARM_MAX_WAIT_SECONDS:
+      RATELIMIT_TMDB_RETRY_AFTER_DEFAULT_SECONDS:
+      RATELIMIT_IP_CAPACITY:
+      RATELIMIT_IP_REFILL_TOKENS:
+      RATELIMIT_IP_REFILL_DURATION_SECONDS:
+      RATELIMIT_AUTH_CAPACITY:
+      RATELIMIT_AUTH_REFILL_TOKENS:
+      RATELIMIT_AUTH_REFILL_DURATION_SECONDS:
     ports:
-      - "${SERVER_PORT}:8080"
-    volumes:
-      - uploads_data:/app/uploads
+      - "127.0.0.1:${SERVER_PORT:?set it in .env}:8080"
     healthcheck:
-      test:
-        ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 10
@@ -42,15 +77,31 @@ services:
       context: ./recommendation-engine/service
       dockerfile: Dockerfile
     container_name: cinelog-rec-engine
-    depends_on:
-      backend:
-        condition: service_healthy
-    ports:
-      - "8181:8181"
     environment:
-      - TRANSFORMERS_OFFLINE=1
+      PORT: "8181"
+      UPDATE_TOKEN: ${UPDATE_TOKEN:?set it in .env}
+      RELOAD_TOKEN: ${RELOAD_TOKEN:?set it in .env}
+      MAX_LIMIT: ${REC_MAX_RESULTS:?set it in .env}
+      # Optional
+      REC_MAX_EXCLUDE:
+      SIMILARITY_THRESHOLD:
+      DEFAULT_LIMIT:
+      MAX_LOVED:
+      UPDATE_RATE_LIMIT:
+      RELOAD_RATE_LIMIT:
+      DB_CONNECT_TIMEOUT_SECONDS:
+      DB_CONNECT_RETRIES:
+      MAX_CONTENT_LENGTH:
+      GUNICORN_THREADS:
+      GUNICORN_TIMEOUT:
+    ports:
+      - "127.0.0.1:8181:8181"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8181/health || exit 1"]
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8181/health', timeout=3)"
       interval: 30s
       timeout: 10s
       retries: 5
@@ -61,14 +112,10 @@ services:
       context: ./frontend/CineLog
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL}
+        VITE_API_URL: ${VITE_API_URL:?set it in .env}
     container_name: cinelog-frontend
     depends_on:
       backend:
         condition: service_healthy
     ports:
-      - "80:80"
-
-volumes:
-  postgres_data:
-  uploads_data:
+      - "127.0.0.1:80:80"

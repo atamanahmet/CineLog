@@ -1,0 +1,13 @@
+# Neon mode: the database is hosted, there is no local Postgres container.
+# The values below have no safe default, so they must be set in .env.neon.
+
+services:
+  backend:
+    environment:
+      SPRING_PROFILES_ACTIVE: neon
+      DB_HOST: ${DB_HOST:?set it in .env.neon}
+      DB_PORT: ${DB_PORT:?set it in .env.neon}
+
+  rec-engine:
+    environment:
+      REC_DATABASE_URL: ${REC_DATABASE_URL:?set it in .env.neon}
