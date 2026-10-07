@@ -1,91 +1,99 @@
-import Card from "../components/Card";
-import { useState, useEffect } from "react";
-import { useUser } from "../context/UserContext";
-import WatchlistButton from "../components/WatchlistButton";
-import api from "../api/axiosInstance";
+import CardGrid from "../components/CardGrid";
 import CardPlate from "../components/CardPlate";
-import ToggleSwitch from "../components/ToggleSwitch";
+import { CardGridSkeletonItems } from "../components/CardGridSkeleton";
+import ClientFilterEmpty from "../components/ClientFilterEmpty";
+import ListControls from "../components/ListControls";
+import useCatalogInfiniteQuery, {
+  TMDB_PAGE_SIZE,
+} from "../hooks/useCatalogInfiniteQuery";
+import useEffectiveCatalogFilters from "../hooks/useEffectiveCatalogFilters";
+import useInfiniteScrollTrigger from "../hooks/useInfiniteScrollTrigger";
+import {
+  emptyTriState,
+  isTriStateActive,
+} from "../lib/triStateFilter";
+import { getMediaTypeLabel } from "../lib/mediaLabels";
+import { buildDiscoverSortOptions } from "../lib/sortOptions";
 
-export default function DiscoverPage({}) {
-  const { user, loading, handleWatchList } = useUser();
-  const [currentPage, setCurrentPage] = useState(1);
+/**
+ * Discover catalog with infinite scroll.
+ */
+export default function DiscoverPage() {
+  const {
+    mediaType,
+    queryFilters,
+    filters,
+    setFilters,
+    bounds,
+    sort,
+  } = useEffectiveCatalogFilters("discover");
+  const catalogFilters = { ...queryFilters, sort: sort || "" };
+  const languageFilter = filters.languageFilter ?? emptyTriState();
+  const { results, fetchNextPage, isFetching, isFetchingNextPage, isLoading } =
+    useCatalogInfiniteQuery(
+      ["discover", mediaType, catalogFilters],
+      `/${mediaType}/discover`,
+      {},
+      {
+        clientLanguageFilter: languageFilter,
+        fillOnLanguageFilter: true,
+      },
+    );
 
-  const [result, setResult] = useState(null);
-  const [adult, setAdult] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
+  useInfiniteScrollTrigger(fetchNextPage, isFetching);
 
-  useEffect(() => {
-    let timeoutId;
-    const handleScroll = () => {
-      if (!isFetching) {
-        const scrollY = window.scrollY;
-        const visible = window.innerHeight;
-        const fullHeight = document.documentElement.scrollHeight;
+  const genreActive = isTriStateActive(queryFilters.genreFilter);
+  const languageActive = isTriStateActive(languageFilter);
+  const listDimmed =
+    isFetching && !isLoading && !isFetchingNextPage && results.length > 0;
+  const filterEmpty =
+    !isLoading &&
+    results.length === 0 &&
+    (genreActive || languageActive) &&
+    !isFetchingNextPage;
 
-        if (scrollY + visible >= fullHeight * 0.75 && !isFetching) {
-          console.log("Requested page, current page: " + currentPage);
-          clearTimeout(timeoutId); // Clear any existing timeout
-          timeoutId = setTimeout(() => {
-            setCurrentPage((prev) => prev + 1); // Increment page after a short delay
-          }, 100);
-        }
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    clearTimeout(timeoutId);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const fetchData = async () => {
-    if (isFetching) return;
-    setIsFetching(true);
-    try {
-      const res = await api.get("", {
-        params: {
-          page: currentPage,
-        },
-        withCredentials: true,
-      });
-      setResult((prev) => {
-        if (!prev || currentPage == 1) return res.data;
-        const existingIds = new Set(prev.map((item) => item.id));
-        const filteredNewItems = res.data.filter((item) => {
-          const releaseYear = new Date(item.release_date).getFullYear();
-          return !existingIds.has(item.id) && releaseYear < 2026;
-        });
-        return [...prev, ...filteredNewItems];
-      });
-    } catch (err) {
-      console.error("Backend error:", err);
-    } finally {
-      setIsFetching(false);
-    }
+  const clearClientFilters = () => {
+    setFilters(
+      {
+        ...filters,
+        genreFilter: emptyTriState(),
+        languageFilter: emptyTriState(),
+      },
+      bounds,
+    );
   };
-
-  useEffect(() => {
-    fetchData();
-  }, [currentPage, adult]);
-
-  if (!result) {
-    return <div>Loading...</div>;
-  }
-
-  function handleToogle() {
-    setAdult((prev) => !prev);
-  }
 
   return (
     <>
-      <h2 className="text-center p-7  text-amber-100 font-bold text-4xl bg-red-900">
-        Discover movies
+      <h2 className="page-container bg-secondary py-7 text-center text-4xl font-bold text-secondary-foreground">
+        Discover {getMediaTypeLabel(mediaType)}
       </h2>
-
-      <div className="flex flex-col  max-w-11/12 justify-center mx-auto ">
-        <div className="w-10/12 -ml-2 text-right mt-5"></div>
-        <main className=" my-10 flex flex-row flex-wrap gap-5 justify-center discoverPage">
-          <CardPlate data={result} message={"Loading.."} />
-        </main>
+      <div className="flex flex-col justify-center">
+        <ListControls
+          page="discover"
+          options={buildDiscoverSortOptions(mediaType)}
+        />
+        {languageActive ? (
+          <p className="page-container text-sm text-muted-foreground">
+            Filtering loaded results only
+          </p>
+        ) : null}
+        <CardGrid
+          className={`page-container my-10 discoverPage${listDimmed ? " opacity-60 transition-opacity" : ""}`}
+        >
+          {isLoading ? (
+            <CardGridSkeletonItems count={TMDB_PAGE_SIZE} />
+          ) : filterEmpty ? (
+            <div className="col-span-full">
+              <ClientFilterEmpty onClear={clearClientFilters} />
+            </div>
+          ) : (
+            <CardPlate data={results} mediaType={mediaType} />
+          )}
+          {isFetchingNextPage && (
+            <CardGridSkeletonItems count={TMDB_PAGE_SIZE} />
+          )}
+        </CardGrid>
       </div>
     </>
   );
