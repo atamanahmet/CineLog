@@ -1,68 +1,33 @@
 import Card from "./Card";
-import { useState } from "react";
-import { useUser } from "../context/UserContext";
-import WatchlistButton from "./WatchlistButton";
+import ListActionButton from "./ListActionButton";
+import { useAuthStore } from "../stores/authStore";
+import { useListsStore } from "../stores/listsStore";
 
-export default function MoviePlate({ movies, onCardClick }) {
-  const { user, handleWatchList, watchlist } = useUser();
-
-  // if (watchlist) {
-  //   return (
-  //     <div className="text-center">
-  //       <div>Loading...</div>
-  //     </div>
-  //   );
-  // }
-
+export default function MoviePlate({ onCardClick }) {
   return (
     <>
-      <CardList
-        result={watchlist}
-        onCardClick={onCardClick}
-        user={user}
-        list={watchlist}
-        addOrRemove={handleWatchList}
-      />
+      <CardList onCardClick={onCardClick} />
     </>
   );
 }
 
-function CardList({ onCardClick, addOrRemove }) {
-  const { user, watchlist } = useUser();
-  function handleWatchlistToogle(id) {
-    let actionType = null;
-    const updateSet = new Set(watchlist);
-    console.log(updateSet);
-    if (updateSet.has(id)) {
-      actionType = "del";
-    } else {
-      actionType = "add";
-    }
-    addOrRemove(id, actionType);
-  }
-
-  // if (!result) return <div>Loading film...</div>;
-  // if (result == null)
-  //   return <div className="text-center text-amber-700">Loading...</div>;
+function CardList({ onCardClick }) {
+  const user = useAuthStore((s) => s.user);
+  const watchlist = useListsStore((s) => s.watchlist);
 
   return (
     <>
       {Array.from(watchlist).map((item) => (
         <div key={item.id} className="relative mb-4">
-          {user && <WatchlistButton item={item} />}
-          <div onClick={() => onCardClick(item)} className="z-1 relative">
-            <Card
-              key={item.id}
-              id={item.id}
-              original_title={item.original_title}
-              overview={item.overview}
-              poster_path={item.poster_path}
-              backdrop_path={item.backdrop_path}
-              title={item.title}
-              vote_average={item.vote_average.toFixed(1)}
-              original_language={item.original_language}
-              release_date={item.release_date}
-            />
+          {user && (
+            <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
+              <ListActionButton item={item} listType="watchlist" />
+              <ListActionButton item={item} listType="watched" />
+              <ListActionButton item={item} listType="loved" />
+            </div>
+          )}
+          <div onClick={() => onCardClick(item)} className="relative z-0">
+            <Card item={item} />
           </div>
         </div>
       ))}

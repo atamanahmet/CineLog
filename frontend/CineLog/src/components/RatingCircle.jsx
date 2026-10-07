@@ -11,7 +11,7 @@ const RatingCircle = ({
     : percentage < 8
     ? "#b7ec00"
     : "#36ec00",
-  bg = "#eee",
+  bg = "var(--muted)",
 }) => {
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;

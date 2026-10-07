@@ -1,29 +1,20 @@
-import { Navigate } from "react-router";
-import { useUser } from "../context/UserContext";
-import { useNavigate } from "react-router";
 import Card from "./Card";
-import ListButton from "./ListButton";
-import { Tooltip } from "@mui/material";
-import { useState } from "react";
-import ToogleSwitch from "./ToggleSwitch";
+import ListActionButton from "./ListActionButton";
+import RejectActionButton from "./RejectActionButton";
+import { buildDetailsPath, resolveMediaType } from "../utils/media";
+import { useAuthStore } from "../stores/authStore";
 
-export default function CardPlate({ data, addOrRemove, message }) {
-  const { user, navigateToDetails } = useUser();
-
-  const style = {
-    watchlist:
-      "absolute h-7 w-7 text-amber-100 bg-amber-200 rounded left-1 z-0 addButton",
-    watchedlist:
-      " h-7 w-7 text-amber-100 bg-amber-200 rounded z-0 addButton absolute ml-10",
-    lovedlist:
-      " h-7 w-7 text-amber-100 bg-amber-200 rounded z-0 addButton absolute ml-19",
-  };
-
-  const navigate = useNavigate();
-
-  function onCardClick(item) {
-    navigateToDetails(item, item.first_air_date != null); //tv or movie
-  }
+/**
+ * Renders catalog cards with list and reject actions.
+ */
+export default function CardPlate({
+  data,
+  mediaType,
+  message,
+  onReject,
+  rejectActive = false,
+}) {
+  const user = useAuthStore((s) => s.user);
 
   if (data == null) {
     return (
@@ -37,17 +28,37 @@ export default function CardPlate({ data, addOrRemove, message }) {
 
   return (
     <>
-      {Array.from(data).map((item) => (
-        <div key={item.id} className="relative mb-8">
-          {user && <ListButton item={item} style={style} />}
+      {Array.from(data).map((item) => {
+        const type = resolveMediaType(item, mediaType);
+        const to = buildDetailsPath(type, item.id);
+        return (
           <div
-            onClick={() => onCardClick(item)}
-            className="z-1 relative text-left flex-shrink-0"
+            key={`${item.mediaType ?? "MOVIE"}-${item.id}`}
+            className="relative h-full w-full min-w-0 max-sm:mb-0 sm:mb-8 sm:w-auto"
           >
-            <Card item={item} />
+            {user && onReject && (
+              <div className="absolute top-2 left-2 z-10">
+                <RejectActionButton
+                  active={rejectActive}
+                  onReject={() => onReject(item)}
+                />
+              </div>
+            )}
+            {user && (
+              <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
+                <ListActionButton item={item} listType="watchlist" mediaType={mediaType} />
+                <ListActionButton item={item} listType="watched" mediaType={mediaType} />
+                <ListActionButton item={item} listType="loved" mediaType={mediaType} />
+              </div>
+            )}
+            <Card
+              item={item}
+              to={to}
+              linkState={{ placeholder: item }}
+            />
           </div>
-        </div>
-      ))}
+        );
+      })}
     </>
   );
 }
