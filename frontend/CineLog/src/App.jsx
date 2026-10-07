@@ -1,95 +1,55 @@
-import { useState, useEffect, useRef } from "react";
-import {
-  Routes,
-  Route,
-  useNavigate,
-  useLocation,
-  useParams,
-} from "react-router-dom";
-import Search from "./components/Search";
-
-import api from "./api/axiosInstance";
+import { Routes, Route, Navigate, useParams } from "react-router";
+import SearchPage from "./pages/SearchPage";
 
 import "./App.css";
-import { useUser } from "./context/UserContext";
 
 import DiscoverPage from "./pages/DiscoverPage";
 
-import Header from "./components/Header";
-import Register from "./pages/Register";
-import Login from "./pages/Login";
+import Layout from "./components/Layout";
+import ScrollToTop from "./components/ScrollToTop";
+import FilterLayout from "./components/FilterLayout";
+import AuthModal from "./components/AuthModal";
 import ProfilePage from "./pages/ProfilePage";
-import Upload from "./pages/Upload";
-import NewReleases from "./pages/NewReleases";
-import Top from "./components/Top";
+import SettingsPage from "./pages/SettingsPage";
+import NewReleasesPage from "./pages/NewReleasesPage";
+import TopPage from "./pages/TopPage";
+import UpcomingPage from "./pages/UpcomingPage";
 import DetailsPage from "./pages/DetailsPage";
+import ActorPage from "./pages/ActorPage";
+import useThemeClass from "./hooks/useThemeClass";
+
+/**
+ * Old /actor/:id bookmarks → /person/:id.
+ */
+function ActorLegacyRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/person/${id}`} replace />;
+}
 
 function App() {
-  const { user, login, logOut, watchlist, searchResponse, mediaType } =
-    useUser();
-  const [result, setResult] = useState();
-  const [isLoading, setIsLoading] = useState(true);
-  const [username, setUsername] = useState(null);
-
-  const [responseName, setResponseName] = useState(null);
-
-  const [movieId, setMovieId] = useState(null);
-  const [actionType, setActionType] = useState(null);
-
-  const [showHeader, setShowHeader] = useState(true);
-  const lastScrollY = useRef(0);
-
-  useEffect(() => {
-    //scroll up header
-    const handleScroll = () => {
-      const currentY = window.scrollY;
-      if (currentY > lastScrollY.current && currentY > 100) {
-        setShowHeader(false); // scrolling down
-      } else {
-        setShowHeader(true); // scrolling up
-      }
-      lastScrollY.current = currentY;
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  //Landing page data call
-
-  //watchlist add and remove calls for api
-  useEffect(() => {
-    if (movieId && actionType) {
-      api
-        .get("/user/watchlist/" + movieId + "/" + actionType, {
-          withCredentials: true,
-        })
-        .catch((err) => console.error("Backend error:", err));
-    }
-  }, [movieId, actionType, watchlist]);
+  useThemeClass();
 
   return (
     <>
-      <div className="pt-15">
-        <Header showHeader={showHeader} />
-        <Routes>
-          <Route path="/" element={<DiscoverPage />} />
-          <Route path="/discover" element={<DiscoverPage />} />
-          <Route path="/top" element={<Top />} />
-          <Route path="/new" element={<NewReleases />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/Login" element={<Login />} />
+      <ScrollToTop />
+      <Routes>
+        <Route element={<Layout />}>
+          <Route element={<FilterLayout />}>
+            <Route path="/" element={<DiscoverPage />} />
+            <Route path="/new" element={<NewReleasesPage />} />
+            <Route path="/upcoming" element={<UpcomingPage />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/top" element={<TopPage />} />
+          </Route>
           <Route path="/profile" element={<ProfilePage />} />
-          {searchResponse != null ? (
-            <Route
-              path="/search"
-              element={<Search data={searchResponse.data} />}
-            />
-          ) : null}
-          <Route path="/details" element={<DetailsPage />} />
-          <Route path="/upload" element={<Upload />} />
-        </Routes>
-      </div>
+          <Route path="/details/:mediaType/:id" element={<DetailsPage />} />
+          <Route path="/person/:id" element={<ActorPage />} />
+          <Route path="/actor/:id" element={<ActorLegacyRedirect />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/upload" element={<Navigate to="/settings#profile" replace />} />
+        </Route>
+      </Routes>
+      <AuthModal />
     </>
   );
 }
