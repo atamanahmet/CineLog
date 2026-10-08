@@ -1,9 +1,9 @@
 package com.atamanahmet.cinelog.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,18 +16,17 @@ import com.cloudinary.Cloudinary;
  * Optional Cloudinary client and profile photo storage. Blank URL uses disabled storage.
  */
 @Configuration
+@EnableConfigurationProperties(CloudinaryProperties.class)
 public class CloudinaryConfig {
-
-    private static final int TIMEOUT_SECONDS = 10;
 
     /**
      * Build the Cloudinary client when CLOUDINARY_URL is set.
      */
     @Bean
     @ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${cloudinary.url:}')")
-    public Cloudinary cloudinary(@Value("${cloudinary.url}") String url) {
-        Cloudinary cloudinary = new Cloudinary(url);
-        cloudinary.config.timeout = TIMEOUT_SECONDS;
+    public Cloudinary cloudinary(CloudinaryProperties properties) {
+        Cloudinary cloudinary = new Cloudinary(properties.url());
+        cloudinary.config.timeout = properties.timeoutSeconds();
         return cloudinary;
     }
 

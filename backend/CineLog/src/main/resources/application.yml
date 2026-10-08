@@ -21,13 +21,14 @@ spring:
   task:
     scheduling:
       pool:
-        size: 2
+        size: ${SCHEDULING_POOL_SIZE:2}
 
 api:
   key: ${TMDB_API_KEY}
 
 cloudinary:
   url: ${CLOUDINARY_URL:}
+  timeout-seconds: ${CLOUDINARY_TIMEOUT_SECONDS:10}
 
 jwt:
   secret: ${JWT_SECRET}
@@ -37,61 +38,66 @@ auth:
   refresh-token-ttl: ${AUTH_REFRESH_TOKEN_TTL:30d}
   cookie-secure: ${AUTH_COOKIE_SECURE:true}
   cookie-same-site: ${AUTH_COOKIE_SAME_SITE:Lax}
+  allowed-origins: ${AUTH_ALLOWED_ORIGINS}
 
 recommendation:
   engine:
     url: ${REC_ENGINE_URL}
     update-token: ${UPDATE_TOKEN}
-    connect-timeout: 3s
-    read-timeout: 10s
+    connect-timeout: ${REC_CONNECT_TIMEOUT:3s}
+    read-timeout: ${REC_READ_TIMEOUT:10s}
   cache:
-    ttl-hours: 6
-    max-size: 5000
-    hydrate-pool-size: 8
-    hydrate-timeout-seconds: 8
+    ttl-hours: ${REC_CACHE_TTL_HOURS:6}
+    max-size: ${REC_CACHE_MAX_SIZE:5000}
+    hydrate-pool-size: ${REC_CACHE_HYDRATE_POOL_SIZE:8}
+    hydrate-timeout-seconds: ${REC_CACHE_HYDRATE_TIMEOUT_SECONDS:8}
   limits:
     max-results: ${REC_MAX_RESULTS:100}
     max-exclude: ${REC_MAX_EXCLUDE:10000}
   quality:
-    min-votes-movie: 100
-    min-votes-tv: 50
+    min-votes-movie: ${REC_QUALITY_MIN_VOTES_MOVIE:100}
+    min-votes-tv: ${REC_QUALITY_MIN_VOTES_TV:50}
 
 content:
   adult-enabled: ${ADULT_CONTENT_ENABLED:false}
 
 ratelimit:
   tmdb:
-    capacity: 25
-    refill-tokens: 25
-    refill-duration-seconds: 1
-  tmdb-max-wait-seconds: 1
+    capacity: ${RATELIMIT_TMDB_CAPACITY:25}
+    refill-tokens: ${RATELIMIT_TMDB_REFILL_TOKENS:25}
+    refill-duration-seconds: ${RATELIMIT_TMDB_REFILL_DURATION_SECONDS:1}
+  tmdb-max-wait-seconds: ${RATELIMIT_TMDB_MAX_WAIT_SECONDS:1}
   tmdb-warm:
-    capacity: 3
-    refill-tokens: 3
-    refill-duration-seconds: 1
-  tmdb-warm-max-wait-seconds: 5
-  tmdb-retry-after-default-seconds: 1
+    capacity: ${RATELIMIT_TMDB_WARM_CAPACITY:3}
+    refill-tokens: ${RATELIMIT_TMDB_WARM_REFILL_TOKENS:3}
+    refill-duration-seconds: ${RATELIMIT_TMDB_WARM_REFILL_DURATION_SECONDS:1}
+  tmdb-warm-max-wait-seconds: ${RATELIMIT_TMDB_WARM_MAX_WAIT_SECONDS:5}
+  tmdb-retry-after-default-seconds: ${RATELIMIT_TMDB_RETRY_AFTER_DEFAULT_SECONDS:1}
   ip:
-    capacity: 30
-    refill-tokens: 30
-    refill-duration-seconds: 60
+    capacity: ${RATELIMIT_IP_CAPACITY:30}
+    refill-tokens: ${RATELIMIT_IP_REFILL_TOKENS:30}
+    refill-duration-seconds: ${RATELIMIT_IP_REFILL_DURATION_SECONDS:60}
   auth:
-    capacity: 5
-    refill-tokens: 5
-    refill-duration-seconds: 60
+    capacity: ${RATELIMIT_AUTH_CAPACITY:5}
+    refill-tokens: ${RATELIMIT_AUTH_REFILL_TOKENS:5}
+    refill-duration-seconds: ${RATELIMIT_AUTH_REFILL_DURATION_SECONDS:60}
 
 discover:
   cache:
-    items-per-sort: 500
-    ttl-hours: 6
-    refresh-hours: 5
+    items-per-sort: ${DISCOVER_CACHE_ITEMS_PER_SORT:500}
+    ttl-hours: ${DISCOVER_CACHE_TTL_HOURS:6}
+    refresh-hours: ${DISCOVER_CACHE_REFRESH_HOURS:5}
 
 details:
   cache:
-    ttl-hours: 6
-    max-size: 2000
+    ttl-hours: ${DETAILS_CACHE_TTL_HOURS:6}
+    max-size: ${DETAILS_CACHE_MAX_SIZE:2000}
 
 person:
   cache:
-    ttl-hours: 6
-    max-size: 500
+    ttl-hours: ${PERSON_CACHE_TTL_HOURS:6}
+    max-size: ${PERSON_CACHE_MAX_SIZE:500}
+
+genre:
+  cache:
+    ttl-hours: ${GENRE_CACHE_TTL_HOURS:168}

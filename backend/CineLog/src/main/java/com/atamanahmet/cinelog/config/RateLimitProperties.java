@@ -5,12 +5,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "ratelimit")
 public class RateLimitProperties {
 
-    private final BucketLimit tmdb = new BucketLimit();
-    private final BucketLimit tmdbWarm = new BucketLimit();
-    private final BucketLimit ip = new BucketLimit();
-    private final BucketLimit auth = new BucketLimit();
+    private final BucketLimit tmdb = new BucketLimit(25, 25, 1);
+    private final BucketLimit tmdbWarm = new BucketLimit(3, 3, 1);
+    private final BucketLimit ip = new BucketLimit(30, 30, 60);
+    private final BucketLimit auth = new BucketLimit(5, 5, 60);
     private long tmdbMaxWaitSeconds = 1;
-    private long tmdbWarmMaxWaitSeconds = 2;
+    private long tmdbWarmMaxWaitSeconds = 5;
     private long tmdbRetryAfterDefaultSeconds = 1;
 
     public BucketLimit getTmdb() {
@@ -57,6 +57,15 @@ public class RateLimitProperties {
         private long capacity;
         private long refillTokens;
         private long refillDurationSeconds;
+
+        public BucketLimit() {
+        }
+
+        public BucketLimit(long capacity, long refillTokens, long refillDurationSeconds) {
+            this.capacity = capacity;
+            this.refillTokens = refillTokens;
+            this.refillDurationSeconds = refillDurationSeconds;
+        }
 
         public long getCapacity() {
             return capacity;
