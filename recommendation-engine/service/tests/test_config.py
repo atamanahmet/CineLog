@@ -51,3 +51,21 @@ def test_max_limit_default_is_100():
 
 def test_max_exclude_default_is_10000():
     assert MAX_EXCLUDE == 10000
+
+
+def test_update_rate_limit_default():
+    from config import UPDATE_RATE_LIMIT
+
+    assert UPDATE_RATE_LIMIT == "60 per minute"
+
+
+def test_reload_rate_limit_default():
+    from config import RELOAD_RATE_LIMIT
+
+    assert RELOAD_RATE_LIMIT == "3 per hour"
+
+
+def test_max_content_length_default():
+    from config import MAX_CONTENT_LENGTH
+
+    assert MAX_CONTENT_LENGTH == 262144

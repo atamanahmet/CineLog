@@ -7,7 +7,7 @@ from flask_limiter import Limiter
 from flask_limiter.errors import RateLimitExceeded
 
 from catalog_store import CatalogStore
-from config import RELOAD_RATE_LIMIT, UPDATE_RATE_LIMIT
+from config import MAX_CONTENT_LENGTH, RELOAD_RATE_LIMIT, UPDATE_RATE_LIMIT
 from routes import create_blueprint
 
 
@@ -22,7 +22,7 @@ def create_app(
     reload_rate_limit: str | None = None,
 ) -> Flask:
     app = Flask(__name__)
-    app.config["MAX_CONTENT_LENGTH"] = 262144
+    app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
     app.config["CATALOG_STORE"] = store
     app.config["RATELIMIT_HEADERS_ENABLED"] = True
 
