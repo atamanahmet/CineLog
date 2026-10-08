@@ -36,6 +36,11 @@ public interface MovieService {
     Movie findMovieById(Integer id);
 
     /**
+     * True when a movie row with this id exists. No entity load.
+     */
+    boolean existsMovie(Integer id);
+
+    /**
      * Return local movie, or fetch from TMDB, save, and return it.
      */
     Movie findOrFetchMovie(Integer id);

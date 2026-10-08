@@ -118,6 +118,12 @@ public class TvShowServiceImpl implements TvShowService {
         return tvShowRepository.findById(id).orElse(null);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsTvShow(Integer id) {
+        return tvShowRepository.existsById(id);
+    }
+
     /**
      * Return local TV show, or fetch from TMDB, save, and return it.
      */

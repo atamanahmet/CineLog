@@ -45,11 +45,10 @@ public class UserController {
      */
     @PutMapping("/user/list/{mediaType}/{listType}/{id}")
     public ResponseEntity<?> addToList(
-            @PathVariable(name = "id") String id,
+            @PathVariable(name = "id") int id,
             @PathVariable(name = "mediaType") String mediaType,
-            @PathVariable(name = "listType") ListType listType,
-            HttpServletRequest request) {
-        return userListService.addToList(id, resolveMediaType(mediaType), listType, request);
+            @PathVariable(name = "listType") ListType listType) {
+        return userListService.addToList(id, resolveMediaType(mediaType), listType);
     }
 
     /**

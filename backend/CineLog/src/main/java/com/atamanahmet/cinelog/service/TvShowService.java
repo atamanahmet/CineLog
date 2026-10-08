@@ -36,6 +36,11 @@ public interface TvShowService {
     TvShow findTvShowById(Integer id);
 
     /**
+     * True when a TV show row with this id exists. No entity load.
+     */
+    boolean existsTvShow(Integer id);
+
+    /**
      * Return local TV show, or fetch from TMDB, save, and return it.
      */
     TvShow findOrFetchTvShow(Integer id);

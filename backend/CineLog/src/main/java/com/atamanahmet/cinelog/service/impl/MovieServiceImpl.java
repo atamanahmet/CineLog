@@ -118,6 +118,12 @@ public class MovieServiceImpl implements MovieService {
         return movieRepository.findById(id).orElse(null);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsMovie(Integer id) {
+        return movieRepository.existsById(id);
+    }
+
     /**
      * Return local movie, or fetch from TMDB, save, and return it.
      */

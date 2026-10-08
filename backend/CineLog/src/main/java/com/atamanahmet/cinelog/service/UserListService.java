@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -17,9 +16,9 @@ import com.atamanahmet.cinelog.domain.entity.Movie;
 import com.atamanahmet.cinelog.domain.entity.TmdbMediaType;
 import com.atamanahmet.cinelog.domain.entity.TvShow;
 import com.atamanahmet.cinelog.domain.entity.User;
-import com.atamanahmet.cinelog.domain.entity.UserListEntry;
 import com.atamanahmet.cinelog.dto.MediaListItemDTO;
 import com.atamanahmet.cinelog.repository.UserListEntryRepository;
+import com.atamanahmet.cinelog.security.UserUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -46,48 +45,27 @@ public class UserListService {
     private final ListItemHydrator listItemHydrator;
 
     /**
-     * Add a media id to the matching user list. Skips insert when the id is already present.
+     * Add a media id to the matching user list. Clears conflicting lists and inserts once,
+     * ignoring an existing membership. Fetches the title from TMDB only when it is missing.
      */
     @Transactional
-    public ResponseEntity<?> addToList(String id, TmdbMediaType mediaType, ListType listType,
-            HttpServletRequest request) {
-        if (id == null) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    public ResponseEntity<?> addToList(int id, TmdbMediaType mediaType, ListType listType) {
+        Integer userId = UserUtil.getCurrentUserId();
+        boolean present = switch (mediaType) {
+            case MOVIE -> movieService.existsMovie(id);
+            case TV -> tvShowService.existsTvShow(id);
+        };
+        if (!present) {
+            boolean fetched = switch (mediaType) {
+                case MOVIE -> movieService.findOrFetchMovie(id) != null;
+                case TV -> tvShowService.findOrFetchTvShow(id) != null;
+            };
+            if (!fetched) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
         }
-        int mediaId = Integer.valueOf(id);
-        User user = currentUserService.getCurrentUser();
-        Movie movie = null;
-        TvShow tvShow = null;
-        switch (mediaType) {
-            case MOVIE:
-                try {
-                    movie = movieService.findOrFetchMovie(mediaId);
-                } catch (DataIntegrityViolationException e) {
-                    movie = movieService.findMovieById(mediaId);
-                }
-                break;
-            case TV:
-                try {
-                    tvShow = tvShowService.findOrFetchTvShow(mediaId);
-                } catch (DataIntegrityViolationException e) {
-                    tvShow = tvShowService.findTvShowById(mediaId);
-                }
-                break;
-        }
-        if (mediaType == TmdbMediaType.MOVIE ? movie == null : tvShow == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        int tmdbId = mediaType == TmdbMediaType.MOVIE ? movie.getId() : tvShow.getId();
-        removeConflicts(user.getId(), tmdbId, mediaType, listType);
-        if (!userListEntryRepository.existsByUserIdAndTmdbIdAndMediaTypeAndListType(
-                user.getId(), tmdbId, mediaType, listType)) {
-            UserListEntry entry = new UserListEntry();
-            entry.setUserId(user.getId());
-            entry.setTmdbId(tmdbId);
-            entry.setMediaType(mediaType);
-            entry.setListType(listType);
-            userListEntryRepository.save(entry);
-        }
+        removeConflicts(userId, id, mediaType, listType);
+        userListEntryRepository.insertIgnoreConflict(userId, id, mediaType.name(), listType.name());
         return ResponseEntity.noContent().build();
     }
 
@@ -133,15 +111,14 @@ public class UserListService {
     }
 
     /**
-     * Delete conflicting list memberships for one title before add.
+     * Delete conflicting list memberships for one title before add. WATCHED has no conflicts.
      */
     private void removeConflicts(
-            Integer userId, Integer tmdbId, TmdbMediaType mediaType, ListType listType) {
+            Integer userId, int tmdbId, TmdbMediaType mediaType, ListType listType) {
         Set<ListType> conflicts = CONFLICTS.getOrDefault(listType, Set.of());
         if (conflicts.isEmpty()) {
             return;
         }
-        userListEntryRepository.deleteByUserIdAndTmdbIdAndMediaTypeAndListTypeIn(
-                userId, tmdbId, mediaType, conflicts);
+        userListEntryRepository.deleteConflicts(userId, tmdbId, mediaType, conflicts);
     }
 }
