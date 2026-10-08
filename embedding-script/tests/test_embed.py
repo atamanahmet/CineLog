@@ -13,6 +13,7 @@ from embed import (
     build_text,
     embedding_row_fields,
     ping_reload,
+    reload_http_timeout_s,
     skip_reason,
     to_float16_bytes,
 )
@@ -55,7 +56,7 @@ def _patch_main_io(monkeypatch, *, page_map, flush_side_effect=None):
 
     pings: list[tuple[str, str]] = []
 
-    def fake_ping(url: str, token: str):
+    def fake_ping(url: str, token: str, timeout_s: float | None = None):
         pings.append((url, token))
         return 200
 
@@ -381,6 +382,16 @@ def test_ping_reload_logs_exception_class(monkeypatch, caplog):
     assert "example.test" not in caplog.text
 
 
+def test_reload_http_timeout_default(monkeypatch):
+    monkeypatch.delenv("RELOAD_HTTP_TIMEOUT_S", raising=False)
+    assert reload_http_timeout_s() == 120
+
+
+def test_reload_http_timeout_from_env(monkeypatch):
+    monkeypatch.setenv("RELOAD_HTTP_TIMEOUT_S", "45")
+    assert reload_http_timeout_s() == 45.0
+
+
 def test_main_pings_when_nothing_written(monkeypatch):
     item = CatalogItem(1, "MOVIE", "A", "plot")
     monkeypatch.setattr(
@@ -409,7 +420,7 @@ def test_main_pings_when_nothing_written(monkeypatch):
     monkeypatch.setattr(embed, "iter_discover_pages", fake_pages)
     pings: list[int] = []
     monkeypatch.setattr(
-        embed, "ping_reload", lambda _url, _token: pings.append(1) or 200
+        embed, "ping_reload", lambda _url, _token, timeout_s=None: pings.append(1) or 200
     )
     monkeypatch.setattr(
         embed, "flush_chunk", lambda *_a, **_k: (_ for _ in ()).throw(AssertionError())

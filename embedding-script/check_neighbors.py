@@ -22,7 +22,6 @@ NEIGHBOR_LIMIT = 5
 SCORE_TOLERANCE = 1e-3
 DISPLAY_THRESHOLD = 0.3
 HTTP_TIMEOUT_S = 10
-DEFAULT_ENGINE_BASE_URL = "http://localhost:8181"
 RNG_SEED = 0
 
 
@@ -51,9 +50,9 @@ def read_env() -> dict[str, str]:
         values[name] = raw.strip()
 
     engine = os.environ.get("REC_ENGINE_BASE_URL")
-    values["REC_ENGINE_BASE_URL"] = (
-        engine.strip() if engine and engine.strip() else DEFAULT_ENGINE_BASE_URL
-    )
+    if engine is None or not engine.strip():
+        raise NeighborCheckError("Missing required environment variable: REC_ENGINE_BASE_URL")
+    values["REC_ENGINE_BASE_URL"] = engine.strip()
     return values
 
 

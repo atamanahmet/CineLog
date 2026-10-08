@@ -16,6 +16,12 @@ REQUEST_TIMEOUT_S = 15
 MAX_RETRIES = 5
 BACKOFF_START_S = 2.0
 
+MEDIA_ENDPOINTS: dict[str, tuple[str, str]] = {
+    "MOVIE": ("/3/discover/movie", "title"),
+    "TV": ("/3/discover/tv", "name"),
+}
+MEDIA_TYPES = tuple(MEDIA_ENDPOINTS)
+
 
 class TmdbRequestError(Exception):
     """Raised when a TMDB request fails after all retries."""
@@ -147,24 +153,12 @@ def _optional_vote_count(raw: dict[str, Any]) -> int | None:
     return int(value)
 
 
-def _map_movie(raw: dict[str, Any]) -> CatalogItem:
-    """Map one discover movie dict to a CatalogItem."""
+def _map_item(media_type: str, title_key: str, raw: dict[str, Any]) -> CatalogItem:
+    """Map one discover dict to a CatalogItem. Movies use title, TV uses name."""
     return CatalogItem(
         tmdb_id=int(raw["id"]),
-        media_type="MOVIE",
-        title=str(raw.get("title") or ""),
-        overview=raw.get("overview"),
-        genre_ids=_optional_genre_ids(raw),
-        vote_count=_optional_vote_count(raw),
-    )
-
-
-def _map_tv(raw: dict[str, Any]) -> CatalogItem:
-    """Map one discover TV dict to a CatalogItem."""
-    return CatalogItem(
-        tmdb_id=int(raw["id"]),
-        media_type="TV",
-        title=str(raw.get("name") or ""),
+        media_type=media_type,
+        title=str(raw.get(title_key) or ""),
         overview=raw.get("overview"),
         genre_ids=_optional_genre_ids(raw),
         vote_count=_optional_vote_count(raw),
@@ -181,14 +175,10 @@ def iter_discover_pages(
     rng: Callable[[], float] = random.random,
 ) -> Iterator[list[CatalogItem]]:
     """Yield discover result pages for one media type."""
-    if media_type == "MOVIE":
-        path = "/3/discover/movie"
-        mapper = _map_movie
-    elif media_type == "TV":
-        path = "/3/discover/tv"
-        mapper = _map_tv
-    else:
+    endpoint = MEDIA_ENDPOINTS.get(media_type)
+    if endpoint is None:
         raise ValueError(f"unsupported media_type: {media_type}")
+    path, title_key = endpoint
 
     limit = min(max(page_limit, 1), 500)
     for page in range(1, limit + 1):
@@ -207,4 +197,8 @@ def iter_discover_pages(
         results = payload.get("results")
         if not isinstance(results, list):
             raise TmdbRequestError(f"TMDB invalid page body at {path}")
-        yield [mapper(item) for item in results if isinstance(item, dict)]
+        yield [
+            _map_item(media_type, title_key, item)
+            for item in results
+            if isinstance(item, dict)
+        ]

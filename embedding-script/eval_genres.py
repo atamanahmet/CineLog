@@ -23,7 +23,6 @@ RESULT_LIMIT = 50
 ANIMATION_ID = 16
 HTTP_TIMEOUT_S = 10
 TMDB_TIMEOUT_S = 10.0
-DEFAULT_ENGINE_BASE_URL = "http://localhost:8181"
 SEED_SETS_PATH = Path(__file__).resolve().parent / "eval_seed_sets.json"
 
 CATALOG_META_SQL = """
@@ -247,9 +246,9 @@ def read_env() -> dict[str, str]:
         values[name] = raw.strip()
 
     engine = os.environ.get("REC_ENGINE_BASE_URL")
-    values["REC_ENGINE_BASE_URL"] = (
-        engine.strip() if engine and engine.strip() else DEFAULT_ENGINE_BASE_URL
-    )
+    if engine is None or not engine.strip():
+        raise SystemExit("Missing required environment variable: REC_ENGINE_BASE_URL")
+    values["REC_ENGINE_BASE_URL"] = engine.strip()
     return values
 
 
