@@ -20,7 +20,7 @@ class DiscoverCacheKeyTest {
     void defaultMovieRequestMapsToWarmedKey() {
         DiscoverCacheService service = newService();
         DiscoverRequest request = new DiscoverRequest(null, null, null, null, null, null, null, null, null, null,
-                null, null);
+                null, null, null);
         assertEquals(SortOption.POPULARITY_DESC, service.warmedCacheKey(request, TmdbMediaType.MOVIE));
         assertEquals(DiscoverRequest.forWarm(SortOption.POPULARITY_DESC, TmdbMediaType.MOVIE).sort(),
                 request.withDefaults(TmdbMediaType.MOVIE).sort());
@@ -33,7 +33,7 @@ class DiscoverCacheKeyTest {
     void defaultTvRequestMapsToWarmedKey() {
         DiscoverCacheService service = newService();
         DiscoverRequest request = new DiscoverRequest(null, null, null, null, null, null, null, null, null, null,
-                null, null);
+                null, null, null);
         assertEquals(SortOption.VOTE_COUNT_DESC, service.warmedCacheKey(request, TmdbMediaType.TV));
         assertEquals(DiscoverRequest.forWarm(SortOption.VOTE_COUNT_DESC, TmdbMediaType.TV).sort(),
                 request.withDefaults(TmdbMediaType.TV).sort());
@@ -45,7 +45,7 @@ class DiscoverCacheKeyTest {
     @Test
     void voteCountZeroMovieDoesNotMapToCacheKey() {
         DiscoverCacheService service = newService();
-        DiscoverRequest request = new DiscoverRequest(null, null, 0, null, null, null, null, null, null, null, null, null);
+        DiscoverRequest request = new DiscoverRequest(null, null, 0, null, null, null, null, null, null, null, null, null, null);
         assertNull(service.warmedCacheKey(request, TmdbMediaType.MOVIE));
     }
 
@@ -55,7 +55,7 @@ class DiscoverCacheKeyTest {
     @Test
     void voteCountZeroTvDoesNotMapToCacheKey() {
         DiscoverCacheService service = newService();
-        DiscoverRequest request = new DiscoverRequest(null, null, 0, null, null, null, null, null, null, null, null, null);
+        DiscoverRequest request = new DiscoverRequest(null, null, 0, null, null, null, null, null, null, null, null, null, null);
         assertNull(service.warmedCacheKey(request, TmdbMediaType.TV));
     }
 
@@ -65,7 +65,7 @@ class DiscoverCacheKeyTest {
     @Test
     void runtimeSetMovieDoesNotMapToCacheKey() {
         DiscoverCacheService service = newService();
-        DiscoverRequest request = new DiscoverRequest(null, null, null, null, null, null, null, null, null, 60, 120, null);
+        DiscoverRequest request = new DiscoverRequest(null, null, null, null, null, null, null, null, null, 60, 120, null, null);
         assertNull(service.warmedCacheKey(request, TmdbMediaType.MOVIE));
     }
 
@@ -75,7 +75,7 @@ class DiscoverCacheKeyTest {
     @Test
     void runtimeSetTvDoesNotMapToCacheKey() {
         DiscoverCacheService service = newService();
-        DiscoverRequest request = new DiscoverRequest(null, null, null, null, null, null, null, null, null, 60, 120, null);
+        DiscoverRequest request = new DiscoverRequest(null, null, null, null, null, null, null, null, null, 60, 120, null, null);
         assertNull(service.warmedCacheKey(request, TmdbMediaType.TV));
     }
 
@@ -86,7 +86,20 @@ class DiscoverCacheKeyTest {
     void withoutGenresDoesNotMapToCacheKey() {
         DiscoverCacheService service = newService();
         DiscoverRequest request = new DiscoverRequest(
-                null, null, null, null, null, null, null, null, null, null, null, java.util.List.of(16));
+                null, null, null, null, null, null, null, null, null, null, null, java.util.List.of(16), null);
+        assertNull(service.warmedCacheKey(request, TmdbMediaType.MOVIE));
+        assertNull(service.warmedCacheKey(request, TmdbMediaType.TV));
+    }
+
+    /**
+     * Upcoming never uses the undated SortOption warmed cache.
+     */
+    @Test
+    void upcomingDoesNotMapToCacheKeyEvenWithDefaultVotes() {
+        DiscoverCacheService service = newService();
+        DiscoverRequest request = new DiscoverRequest(
+                null, null, DiscoverRequest.DEFAULT_MIN_VOTES, null, null, null, null, null, null, null, null, null,
+                true);
         assertNull(service.warmedCacheKey(request, TmdbMediaType.MOVIE));
         assertNull(service.warmedCacheKey(request, TmdbMediaType.TV));
     }

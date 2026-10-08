@@ -174,6 +174,7 @@ public class DiscoverCacheService {
 
     private boolean isDefaultMovieFilters(DiscoverRequest params) {
         return params != null
+                && !Boolean.TRUE.equals(params.upcoming())
                 && Boolean.valueOf(DEFAULT_ADULT).equals(params.adult())
                 && isBlankOrDefault(params.releaseWindow(), DEFAULT_RELEASE_WINDOW)
                 && Integer.valueOf(DiscoverRequest.DEFAULT_MIN_VOTES).equals(params.voteCount())
@@ -187,6 +188,7 @@ public class DiscoverCacheService {
 
     private boolean isDefaultTvFilters(DiscoverRequest params) {
         return params != null
+                && !Boolean.TRUE.equals(params.upcoming())
                 && Boolean.valueOf(DEFAULT_ADULT).equals(params.adult())
                 && isBlankOrDefault(params.releaseWindow(), DEFAULT_RELEASE_WINDOW)
                 && Integer.valueOf(DiscoverRequest.DEFAULT_MIN_VOTES).equals(params.voteCount())

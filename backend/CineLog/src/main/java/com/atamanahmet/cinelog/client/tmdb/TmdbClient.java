@@ -77,6 +77,10 @@ public class TmdbClient {
      */
     public TmdbPagedResponse<TmdbMovieResponse> discoverMovies(DiscoverRequest request) {
         String page = String.valueOf(request.page());
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        ReleaseDateWindow dates = Boolean.TRUE.equals(request.upcoming())
+                ? ReleaseDateWindow.upcoming(today)
+                : ReleaseDateWindow.released(request.yearRange(), today);
         return get("movie", page, uriBuilder -> {
             uriBuilder
                     .path("/discover/movie")
@@ -86,12 +90,8 @@ public class TmdbClient {
                     .queryParam("sort_by", request.sort().toTmdbSort(com.atamanahmet.cinelog.domain.entity.TmdbMediaType.MOVIE))
                     .queryParam("vote_count.gte", request.voteCount())
                     .queryParam("with_genres", request.genreIdsCsv())
-                    .queryParam("primary_release_date.gte", request.yearRange()[0] + "-01-01")
-                    .queryParam("primary_release_date.lte", upperReleaseBound(
-                            request.yearRange() != null && request.yearRange().length > 1
-                                    ? request.yearRange()[1]
-                                    : null,
-                            LocalDate.now(ZoneOffset.UTC)))
+                    .queryParam("primary_release_date.gte", dates.from().toString())
+                    .queryParam("primary_release_date.lte", dates.to().toString())
                     .queryParam("vote_average.gte", request.ratingRange()[0])
                     .queryParam("vote_average.lte", request.ratingRange()[1])
                     .queryParam("with_original_language", request.languages());
@@ -106,6 +106,10 @@ public class TmdbClient {
      */
     public TmdbPagedResponse<TmdbTvShowResponse> discoverTvShows(DiscoverRequest request) {
         String page = String.valueOf(request.page());
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        ReleaseDateWindow dates = Boolean.TRUE.equals(request.upcoming())
+                ? ReleaseDateWindow.upcoming(today)
+                : ReleaseDateWindow.released(request.yearRange(), today);
         return get("tv", page, uriBuilder -> {
             uriBuilder
                     .path("/discover/tv")
@@ -115,12 +119,8 @@ public class TmdbClient {
                     .queryParam("sort_by", request.sort().toTmdbSort(com.atamanahmet.cinelog.domain.entity.TmdbMediaType.TV))
                     .queryParam("vote_count.gte", request.voteCount())
                     .queryParam("with_genres", request.genreIdsCsv())
-                    .queryParam("first_air_date.gte", request.yearRange()[0] + "-01-01")
-                    .queryParam("first_air_date.lte", upperReleaseBound(
-                            request.yearRange() != null && request.yearRange().length > 1
-                                    ? request.yearRange()[1]
-                                    : null,
-                            LocalDate.now(ZoneOffset.UTC)))
+                    .queryParam("first_air_date.gte", dates.from().toString())
+                    .queryParam("first_air_date.lte", dates.to().toString())
                     .queryParam("vote_average.gte", request.ratingRange()[0])
                     .queryParam("vote_average.lte", request.ratingRange()[1]);
             if (request.languages() != null && !request.languages().isBlank()) {

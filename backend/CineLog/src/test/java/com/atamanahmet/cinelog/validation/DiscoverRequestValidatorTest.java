@@ -36,7 +36,7 @@ class DiscoverRequestValidatorTest {
     @Test
     void overlapRejected() {
         DiscoverRequest request = new DiscoverRequest(
-                false, "", 100, null, 1, List.of(28), null, null, "en", null, null, List.of(28));
+                false, "", 100, null, 1, List.of(28), null, null, "en", null, null, List.of(28), null);
         Set<ConstraintViolation<DiscoverRequest>> violations = validator.validate(request);
         assertThat(violations).anyMatch(v -> v.getMessage().contains("must not share an id"));
     }
@@ -44,7 +44,7 @@ class DiscoverRequestValidatorTest {
     @Test
     void duplicatesInWithoutGenresRejected() {
         DiscoverRequest request = new DiscoverRequest(
-                false, "", 100, null, 1, List.of(), null, null, "en", null, null, List.of(16, 16));
+                false, "", 100, null, 1, List.of(), null, null, "en", null, null, List.of(16, 16), null);
         Set<ConstraintViolation<DiscoverRequest>> violations = validator.validate(request);
         assertThat(violations).anyMatch(v -> v.getMessage().contains("duplicates"));
     }
@@ -52,7 +52,7 @@ class DiscoverRequestValidatorTest {
     @Test
     void nonPositiveWithoutGenresRejected() {
         DiscoverRequest request = new DiscoverRequest(
-                false, "", 100, null, 1, List.of(), null, null, "en", null, null, List.of(0));
+                false, "", 100, null, 1, List.of(), null, null, "en", null, null, List.of(0), null);
         Set<ConstraintViolation<DiscoverRequest>> violations = validator.validate(request);
         assertThat(violations).anyMatch(v -> v.getMessage().contains("positive ints"));
     }
@@ -63,7 +63,7 @@ class DiscoverRequestValidatorTest {
                 .boxed()
                 .toList();
         DiscoverRequest request = new DiscoverRequest(
-                false, "", 100, null, 1, List.of(), null, null, "en", null, null, tooMany);
+                false, "", 100, null, 1, List.of(), null, null, "en", null, null, tooMany, null);
         Set<ConstraintViolation<DiscoverRequest>> violations = validator.validate(request);
         assertThat(violations).anyMatch(v -> v.getMessage().contains("length out of range"));
     }
@@ -71,11 +71,33 @@ class DiscoverRequestValidatorTest {
     @Test
     void includeAndExcludeTogetherValid() {
         DiscoverRequest request = new DiscoverRequest(
-                false, "", 100, null, 1, List.of(878), null, null, "en", null, null, List.of(16));
+                false, "", 100, null, 1, List.of(878), null, null, "en", null, null, List.of(16), null);
         assertThat(validator.validate(request)).isEmpty();
     }
 
+    @Test
+    void upcomingTrueWithoutYearRangePasses() {
+        DiscoverRequest request = new DiscoverRequest(
+                false, "", null, null, 1, null, null, null, "en", null, null, null, true);
+        assertThat(validator.validate(request)).isEmpty();
+    }
+
+    @Test
+    void upcomingTrueIgnoresInvalidYearRange() {
+        DiscoverRequest request = new DiscoverRequest(
+                false, "", null, null, 1, null, new int[] { 2101, 2102 }, null, "en", null, null, null, true);
+        assertThat(validator.validate(request)).isEmpty();
+    }
+
+    @Test
+    void notUpcomingInvalidYearRangeRejected() {
+        DiscoverRequest request = new DiscoverRequest(
+                false, "", 100, null, 1, null, new int[] { 2101, 2102 }, null, "en", null, null, null, false);
+        assertThat(validator.validate(request))
+                .anyMatch(v -> v.getPropertyPath().toString().equals("yearRange"));
+    }
+
     private static DiscoverRequest base() {
-        return new DiscoverRequest(null, null, null, null, null, null, null, null, null, null, null, null);
+        return new DiscoverRequest(null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 }

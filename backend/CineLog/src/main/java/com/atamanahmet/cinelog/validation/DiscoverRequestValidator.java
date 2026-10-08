@@ -29,17 +29,19 @@ public class DiscoverRequestValidator implements ConstraintValidator<ValidDiscov
             valid = false;
         }
         int[] years = request.yearRange();
-        if (years == null || years.length != 2) {
-            add(context, "yearRange", "yearRange must have two values");
-            valid = false;
-        } else {
-            if (years[0] > years[1]) {
-                add(context, "yearRange", "yearRange minimum must be before maximum");
+        if (!Boolean.TRUE.equals(request.upcoming())) {
+            if (years == null || years.length != 2) {
+                add(context, "yearRange", "yearRange must have two values");
                 valid = false;
-            }
-            if (years[0] < DiscoverRequest.MIN_YEAR || years[1] > DiscoverRequest.MAX_YEAR) {
-                add(context, "yearRange", "yearRange must be between 1800 and 2100");
-                valid = false;
+            } else {
+                if (years[0] > years[1]) {
+                    add(context, "yearRange", "yearRange minimum must be before maximum");
+                    valid = false;
+                }
+                if (years[0] < DiscoverRequest.MIN_YEAR || years[1] > DiscoverRequest.MAX_YEAR) {
+                    add(context, "yearRange", "yearRange must be between 1800 and 2100");
+                    valid = false;
+                }
             }
         }
         int[] ratings = request.ratingRange();

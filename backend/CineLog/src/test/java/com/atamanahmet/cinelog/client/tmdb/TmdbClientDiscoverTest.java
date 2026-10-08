@@ -53,7 +53,7 @@ class TmdbClientDiscoverTest {
                 .andExpect(queryParam("vote_count.gte", "0"))
                 .andRespond(withSuccess(EMPTY_PAGE, MediaType.APPLICATION_JSON));
 
-        client.discoverMovies(new DiscoverRequest(false, "", 0, null, 1, null, null, null, "en", null, null, null)
+        client.discoverMovies(new DiscoverRequest(false, "", 0, null, 1, null, null, null, "en", null, null, null, null)
                 .withDefaults(com.atamanahmet.cinelog.domain.entity.TmdbMediaType.MOVIE));
 
         server.verify();
@@ -69,7 +69,7 @@ class TmdbClientDiscoverTest {
                 .andExpect(queryParam("vote_count.gte", "0"))
                 .andRespond(withSuccess(EMPTY_PAGE, MediaType.APPLICATION_JSON));
 
-        client.discoverTvShows(new DiscoverRequest(false, "", 0, null, 1, null, null, null, null, null, null, null)
+        client.discoverTvShows(new DiscoverRequest(false, "", 0, null, 1, null, null, null, null, null, null, null, null)
                 .withDefaults(com.atamanahmet.cinelog.domain.entity.TmdbMediaType.TV));
 
         server.verify();
@@ -86,7 +86,7 @@ class TmdbClientDiscoverTest {
                 .andExpect(queryParam("with_runtime.lte", "120"))
                 .andRespond(withSuccess(EMPTY_PAGE, MediaType.APPLICATION_JSON));
 
-        client.discoverMovies(new DiscoverRequest(false, "", 0, null, 1, null, null, null, "en", 60, 120, null)
+        client.discoverMovies(new DiscoverRequest(false, "", 0, null, 1, null, null, null, "en", 60, 120, null, null)
                 .withDefaults(com.atamanahmet.cinelog.domain.entity.TmdbMediaType.MOVIE));
 
         server.verify();
@@ -103,7 +103,7 @@ class TmdbClientDiscoverTest {
                 .andExpect(queryParam("with_runtime.lte", "120"))
                 .andRespond(withSuccess(EMPTY_PAGE, MediaType.APPLICATION_JSON));
 
-        client.discoverTvShows(new DiscoverRequest(false, "", 0, null, 1, null, null, null, null, 60, 120, null)
+        client.discoverTvShows(new DiscoverRequest(false, "", 0, null, 1, null, null, null, null, 60, 120, null, null)
                 .withDefaults(com.atamanahmet.cinelog.domain.entity.TmdbMediaType.TV));
 
         server.verify();
@@ -122,7 +122,7 @@ class TmdbClientDiscoverTest {
                 })
                 .andRespond(withSuccess(EMPTY_PAGE, MediaType.APPLICATION_JSON));
 
-        client.discoverMovies(new DiscoverRequest(false, "", 0, null, 1, null, null, null, "en", null, null, null)
+        client.discoverMovies(new DiscoverRequest(false, "", 0, null, 1, null, null, null, "en", null, null, null, null)
                 .withDefaults(com.atamanahmet.cinelog.domain.entity.TmdbMediaType.MOVIE));
 
         server.verify();
@@ -141,7 +141,7 @@ class TmdbClientDiscoverTest {
                 })
                 .andRespond(withSuccess(EMPTY_PAGE, MediaType.APPLICATION_JSON));
 
-        client.discoverTvShows(new DiscoverRequest(false, "", 0, null, 1, null, null, null, null, null, null, null)
+        client.discoverTvShows(new DiscoverRequest(false, "", 0, null, 1, null, null, null, null, null, null, null, null)
                 .withDefaults(com.atamanahmet.cinelog.domain.entity.TmdbMediaType.TV));
 
         server.verify();
@@ -167,7 +167,7 @@ class TmdbClientDiscoverTest {
                 .andRespond(withSuccess(EMPTY_PAGE, MediaType.APPLICATION_JSON));
 
         client.discoverMovies(new DiscoverRequest(
-                        false, "", 0, null, 1, null, null, null, "en", null, null, java.util.List.of(16, 35))
+                        false, "", 0, null, 1, null, null, null, "en", null, null, java.util.List.of(16, 35), null)
                 .withDefaults(com.atamanahmet.cinelog.domain.entity.TmdbMediaType.MOVIE));
 
         server.verify();
@@ -186,7 +186,51 @@ class TmdbClientDiscoverTest {
                 })
                 .andRespond(withSuccess(EMPTY_PAGE, MediaType.APPLICATION_JSON));
 
-        client.discoverTvShows(new DiscoverRequest(false, "", 0, null, 1, null, null, null, null, null, null, null)
+        client.discoverTvShows(new DiscoverRequest(false, "", 0, null, 1, null, null, null, null, null, null, null, null)
+                .withDefaults(com.atamanahmet.cinelog.domain.entity.TmdbMediaType.TV));
+
+        server.verify();
+    }
+
+    /**
+     * Upcoming movie discover sends tomorrow..+3y and vote_count.gte 0.
+     */
+    @Test
+    void movieDiscoverUpcomingSendsFutureWindow() {
+        java.time.LocalDate today = java.time.LocalDate.now(java.time.ZoneOffset.UTC);
+        String from = today.plusDays(1).toString();
+        String to = today.plusYears(3).toString();
+        server.expect(requestTo(startsWith("https://api.themoviedb.org/3/discover/movie")))
+                .andExpect(method(HttpMethod.GET))
+                .andExpect(queryParam("primary_release_date.gte", from))
+                .andExpect(queryParam("primary_release_date.lte", to))
+                .andExpect(queryParam("vote_count.gte", "0"))
+                .andRespond(withSuccess(EMPTY_PAGE, MediaType.APPLICATION_JSON));
+
+        client.discoverMovies(new DiscoverRequest(
+                        false, "", null, null, 1, null, null, null, "en", null, null, null, true)
+                .withDefaults(com.atamanahmet.cinelog.domain.entity.TmdbMediaType.MOVIE));
+
+        server.verify();
+    }
+
+    /**
+     * Upcoming TV discover sends tomorrow..+3y on first_air_date.
+     */
+    @Test
+    void tvDiscoverUpcomingSendsFutureWindow() {
+        java.time.LocalDate today = java.time.LocalDate.now(java.time.ZoneOffset.UTC);
+        String from = today.plusDays(1).toString();
+        String to = today.plusYears(3).toString();
+        server.expect(requestTo(startsWith("https://api.themoviedb.org/3/discover/tv")))
+                .andExpect(method(HttpMethod.GET))
+                .andExpect(queryParam("first_air_date.gte", from))
+                .andExpect(queryParam("first_air_date.lte", to))
+                .andExpect(queryParam("vote_count.gte", "0"))
+                .andRespond(withSuccess(EMPTY_PAGE, MediaType.APPLICATION_JSON));
+
+        client.discoverTvShows(new DiscoverRequest(
+                        false, "", null, null, 1, null, null, null, null, null, null, null, true)
                 .withDefaults(com.atamanahmet.cinelog.domain.entity.TmdbMediaType.TV));
 
         server.verify();

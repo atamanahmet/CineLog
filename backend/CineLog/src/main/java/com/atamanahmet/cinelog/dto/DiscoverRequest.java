@@ -21,12 +21,14 @@ public record DiscoverRequest(
         SortOption sort,
         @Min(1) Integer page,
         List<Integer> genreIdList,
+        /** Ignored when upcoming is true; ReleaseDateWindow.upcoming supplies dates. */
         int[] yearRange,
         int[] ratingRange,
         String languages,
         Integer minRuntime,
         Integer maxRuntime,
-        List<Integer> withoutGenres) {
+        List<Integer> withoutGenres,
+        Boolean upcoming) {
 
     public static final int DEFAULT_MIN_VOTES = 100;
     public static final int MAX_VOTE_COUNT = 10000;
@@ -47,6 +49,9 @@ public record DiscoverRequest(
     public static final String TMDB_WITHOUT_GENRES_SEPARATOR = "|";
 
     public DiscoverRequest {
+        if (upcoming == null) {
+            upcoming = Boolean.FALSE;
+        }
         if (adult == null) {
             adult = Boolean.FALSE;
         }
@@ -54,7 +59,7 @@ public record DiscoverRequest(
             releaseWindow = "";
         }
         if (voteCount == null) {
-            voteCount = DEFAULT_MIN_VOTES;
+            voteCount = Boolean.TRUE.equals(upcoming) ? 0 : DEFAULT_MIN_VOTES;
         }
         if (page == null) {
             page = 1;
@@ -94,7 +99,7 @@ public record DiscoverRequest(
             languageValue = "en";
         }
         return new DiscoverRequest(adult, releaseWindow, voteCount, sortValue, page, genreIdList, yearRange,
-                ratingRange, languageValue, minRuntime, maxRuntime, withoutGenres);
+                ratingRange, languageValue, minRuntime, maxRuntime, withoutGenres, upcoming);
     }
 
     /**
@@ -113,7 +118,8 @@ public record DiscoverRequest(
                 mediaType == TmdbMediaType.MOVIE ? "en" : null,
                 null,
                 null,
-                List.of());
+                List.of(),
+                Boolean.FALSE);
     }
 
     /**
@@ -124,7 +130,7 @@ public record DiscoverRequest(
             return this;
         }
         return new DiscoverRequest(Boolean.FALSE, releaseWindow, voteCount, sort, page, genreIdList, yearRange,
-                ratingRange, languages, minRuntime, maxRuntime, withoutGenres);
+                ratingRange, languages, minRuntime, maxRuntime, withoutGenres, upcoming);
     }
 
     /**
@@ -132,7 +138,7 @@ public record DiscoverRequest(
      */
     public DiscoverRequest withPage(int pageNumber) {
         return new DiscoverRequest(adult, releaseWindow, voteCount, sort, pageNumber, genreIdList, yearRange,
-                ratingRange, languages, minRuntime, maxRuntime, withoutGenres);
+                ratingRange, languages, minRuntime, maxRuntime, withoutGenres, upcoming);
     }
 
     /**

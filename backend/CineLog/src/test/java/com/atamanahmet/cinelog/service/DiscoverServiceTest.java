@@ -260,15 +260,15 @@ class DiscoverServiceTest {
     }
 
     private static DiscoverRequest requestWithVoteCount(Integer voteCount) {
-        return new DiscoverRequest(null, null, voteCount, null, null, null, null, null, null, null, null, null);
+        return new DiscoverRequest(null, null, voteCount, null, null, null, null, null, null, null, null, null, null);
     }
 
     private static DiscoverRequest requestWithPage(int page) {
-        return new DiscoverRequest(null, null, null, null, page, null, null, null, null, null, null, null);
+        return new DiscoverRequest(null, null, null, null, page, null, null, null, null, null, null, null, null);
     }
 
     private static DiscoverRequest requestWithRuntime(Integer minRuntime, Integer maxRuntime) {
-        return new DiscoverRequest(null, null, null, null, null, null, null, null, null, minRuntime, maxRuntime, null);
+        return new DiscoverRequest(null, null, null, null, null, null, null, null, null, minRuntime, maxRuntime, null, null);
     }
 
     private static MovieDto sampleMovieDto() {
