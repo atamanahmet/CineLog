@@ -3,22 +3,20 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+.cursor
 
 backend/CineLog/.mvn
 recommendation-engine/service/rec-env
-uploads
 
 # Secrets
 .env
+.env.neon
 
 # Python
 venv/
 .venv/
 __pycache__/
 *.pyc
-
-# Uploads
-uploads/
 
 # OS
 .DS_Store
