@@ -5,6 +5,7 @@ from __future__ import annotations
 from flask import Flask, jsonify
 from flask_limiter import Limiter
 from flask_limiter.errors import RateLimitExceeded
+from werkzeug.exceptions import HTTPException
 
 from catalog_store import CatalogStore
 from config import MAX_CONTENT_LENGTH, RELOAD_RATE_LIMIT, UPDATE_RATE_LIMIT
@@ -12,6 +13,7 @@ from routes import create_blueprint
 
 
 def _rate_limit_key() -> str:
+    """Constant key for one shared bucket. The backend is the only caller."""
     return "global"
 
 
@@ -44,7 +46,10 @@ def create_app(
     def handle_rate_limit(exc: RateLimitExceeded):
         response = jsonify({"error": "rate limit exceeded"})
         response.status_code = 429
-        response.headers["Retry-After"] = str(int(exc.limit.limit.get_expiry()))
         return response
+
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(exc: HTTPException):
+        return jsonify({"error": exc.name.lower()}), exc.code
 
     return app

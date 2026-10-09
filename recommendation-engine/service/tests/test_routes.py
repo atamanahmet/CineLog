@@ -14,7 +14,7 @@ import pytest
 from app import create_app
 from catalog import CatalogSnapshot, empty_genre_membership
 from catalog_store import CatalogStore
-from config import DEFAULT_LIMIT, RELOAD_TOKEN, UPDATE_TOKEN
+from config import DEFAULT_LIMIT, MAX_CONTENT_LENGTH, RELOAD_TOKEN, UPDATE_TOKEN
 from request_parsing import UpdateRequest, parse_update_request
 
 
@@ -259,6 +259,48 @@ def test_rate_limit_returns_429():
     assert limited.status_code == 429
     assert limited.get_json() == {"error": "rate limit exceeded"}
     assert "Retry-After" in limited.headers
+
+
+def test_retry_after_is_time_until_reset_not_window():
+    import time
+
+    client, _ = _client(update_rate_limit="2 per minute")
+    payload = {"loved": [{"tmdb_id": 10, "media_type": "MOVIE"}]}
+    headers = _auth(UPDATE_TOKEN)
+    assert client.post("/rec/update", json=payload, headers=headers).status_code == 200
+    assert client.post("/rec/update", json=payload, headers=headers).status_code == 200
+    first = client.post("/rec/update", json=payload, headers=headers)
+    assert first.status_code == 429
+    first_retry = int(first.headers["Retry-After"])
+    time.sleep(2)
+    second = client.post("/rec/update", json=payload, headers=headers)
+    assert second.status_code == 429
+    assert second.get_json() == {"error": "rate limit exceeded"}
+    second_retry = int(second.headers["Retry-After"])
+    assert second_retry <= first_retry - 2
+
+
+def test_http_exception_returns_json_404():
+    client, _ = _client()
+    response = client.get("/no-such-route")
+    assert response.status_code == 404
+    assert response.get_json() == {"error": "not found"}
+
+
+def test_http_exception_returns_json_413():
+    client, _ = _client()
+    oversized = b"x" * (MAX_CONTENT_LENGTH + 1)
+    response = client.post(
+        "/rec/update",
+        data=oversized,
+        headers={
+            **_auth(UPDATE_TOKEN),
+            "Content-Type": "application/json",
+            "Content-Length": str(len(oversized)),
+        },
+    )
+    assert response.status_code == 413
+    assert response.get_json() == {"error": "request entity too large"}
 
 
 def test_unauthorized_does_not_spend_update_rate_limit():
