@@ -9,4 +9,4 @@ FROM amazoncorretto:17
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-Xmx350m", "-XX:MaxMetaspaceSize=128m", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
